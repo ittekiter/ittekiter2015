@@ -1,3 +1,8 @@
+/**
+ * TODO
+ * 経由地の追加
+ */
+
 (function(global) {
 	"use strict";
 
@@ -27,6 +32,7 @@
 	Ittekiter["prototype"]["setSize"] = setSize;
 	Ittekiter["prototype"]["setEvent"] = setEvent;
 	Ittekiter["prototype"]["searchRoot"] = searchRoot;
+	
 	/**
 	 * マップの初期化
 	 */
@@ -43,6 +49,19 @@
 		this.directionsService = new google.maps.DirectionsService();
 		this.directionsDisplay = new google.maps.DirectionsRenderer();
 		this.directionsDisplay.setMap(this.map);
+
+		// POIのポップアップを無効化
+		(function fixInfoWindow() {
+			var set = google.maps.InfoWindow.prototype.set;
+			google.maps.InfoWindow.prototype.set = function(key, val) {
+				if (key === "map") {
+					if (! this.get("noSuppress")) {
+						return;
+					}
+				}
+				set.apply(this, arguments);
+			}
+		})();
 	};
 
 	/**
@@ -163,8 +182,6 @@
 		// アリバイ作成(サイドバー)
 		$("#change_alibi").on("tap", searchRoot.bind(it));
 
-
-
 		// サイドバートグル
 		$("#base__toggle_sidebar").on("tap", function() {
 			it.elements.$base.toggleClass('base--sidebaropened');
@@ -262,19 +279,78 @@
 
 		var request = {
 			location: it.searchData.to.geometry.location,
-			radius: '5000',
+			radius: '2000',
 			types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
 		};
+
+		if (typeof it.popups !== "undefined" && it.popups.length > 0) {
+			for (var i = 0; i < it.popups.length; i++) {
+				it.popups[i].setMap(null);
+			}
+		}
+
+		it.popups = [];
 
 		it.placesService = new google.maps.places.PlacesService(it.map);
 		it.placesService.nearbySearch(request, function (results, status) {
 			if (status == google.maps.places.PlacesServiceStatus.OK) {
 				for (var i = 0; i < results.length && i < 5; i++) {
-					var marker = new ExpandablePopup(it.map, results[i].geometry.location, results[i].name);
+					it.popups[i] = new ExpandablePopup(it.map, results[i].geometry.location, results[i].name);
+					it.popups[i].loadContent = loadPlacesContent.bind(it.popups[i], results[i]);
 				}
 			}
 		});
 	};
+
+	/**
+	 * 与えられたPlaceのポップアップ用の情報を取得
+	 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
+	 */
+	function loadPlacesContent(place) {
+		var popup = this;
+
+		var request = {
+			placeId: place.place_id
+		};
+
+		var placesService = new google.maps.places.PlacesService(popup.map);
+
+		var content = '';
+		placesService.getDetails(request, function(details, status) {
+			if (status == google.maps.places.PlacesServiceStatus.OK) {
+				content += '<div class="_scroll">'
+				content += '<h3>' + details.name + '</h3>';
+
+				if (details.photos) {
+					content += '<div class="popup__photocontainer">';
+					for (var i = 0; i < details.photos.length && i < 6; i++) {
+						var opt = {
+							maxHeight: details.photos[i].height,
+							maxWidth: details.photos[i].width
+						}
+						content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
+					}
+					content += '</div>';
+				}
+
+				if (details.reviews) {
+					var reviewTexts = "";
+					for (var i = 0; i < details.reviews.length; i++) {
+						reviewTexts += details.reviews[i].text;
+					}
+
+					for (var i = 0; i < details.reviews.length && i < 3; i++) {
+						content += '<p>' + details.reviews[i].text + '</p>';
+					}
+				}
+
+				content += '<div class="form-group"><textarea class="form-control" rows="3"></textarea></div><button type="button" class="btn btn-info btn-lg btn-block">Tweet</button>';
+				content += '</div>';						// ._scroll
+
+				popup.content = content;
+			}
+		});
+	}
 
 	/**
 	 * 地図上にクリックすると拡大するポップアップを表示(InfoWindow代替)
@@ -297,6 +373,7 @@
 
 	// Extention
 	ExpandablePopup['prototype']['modifyExpandedPopupSize'] = modifyExpandedPopupSize;
+	ExpandablePopup['prototype']['applyModifiedExpandedPopUpSize'] = applyModifiedExpandedPopUpSize;
 	ExpandablePopup['prototype']['initContent'] = initContent;
 	ExpandablePopup['prototype']['loadContent'] = loadContent;
 
@@ -309,11 +386,14 @@
 		$(panes.overlayMouseTarget).append(this.$popover);
 		this.initContent();
 
-		this.$popover.one('tap', expandExpandablePopup.bind(this));
+		this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
+			e.stopPropagation();
+		});
 	}
 
 	/**
 	 * google.maps.OvarlayView.draw()の実装
+	 * 吹き出しの場所を修正
 	 */
 	function expandablePopupDraw() {
 		this.point = this.getProjection().fromLatLngToDivPixel(this.latlng);
@@ -325,6 +405,7 @@
 
 	/**
 	 * google.maps.OvarlayView.onRemove()の実装
+	 * expandablePopupOnAdd.setMap(null)で実行
 	 */
 	function expandablePopupOnRemove() {
 		this.$popover.remove();
@@ -332,8 +413,9 @@
 
 	/**
 	 * 拡張時のサイズ設定
+	 * @param  {boolean} applicable 後から自分で適応する場合false
 	 */
-	function modifyExpandedPopupSize() {
+	function modifyExpandedPopupSize(applicable) {
 		var m = $("#map");
 		var mw = m.width();
 		var mh = m.height();
@@ -344,16 +426,24 @@
 
 		this.height = mh - 55 - 40 - 10;
 		this.width = mw - 40 - 10;
-		this.$popover.css({
-			width: this.width,
-			height: this.height
-		});
-		this.draw();
+		if (applicable)
+			this.applyModifiedExpandedPopUpSize();
 
 		var prj = this.getProjection();
 		var pixel = prj.fromLatLngToDivPixel(this.latlng);
 		pixel.y -= this.height / 2;
 		this.map.panTo(prj.fromDivPixelToLatLng(pixel));
+	}
+
+	/**
+	 * ポップアップのサイズ変更を適用
+	 */
+	function applyModifiedExpandedPopUpSize() {
+		this.$popover.css({
+			width: this.width,
+			height: this.height
+		});
+		this.draw();
 	}
 
 	/**
@@ -367,6 +457,11 @@
 		this.$popover.find('.popover-content').html(this.content);
 		this.width = this.$popover.outerWidth();
 		this.height = this.$popover.outerHeight();
+		this.$popover.css({
+			width: this.width,
+			height: this.height
+		});
+
 		this.draw();
 	}
 
@@ -376,7 +471,7 @@
 	 */
 	function loadContent() {
 		// 継承先かインスタンスで実装してください。
-		return this.content;
+		this.content = this.content;
 	}
 
 	function expandExpandablePopup() {
@@ -387,23 +482,33 @@
 		var tmpCenter = popup.map.getCenter();
 		var tmpContent = popup.content;
 
-		popup.content = popup.loadContent();
+		popup.loadContent();
 
-		popup.modifyExpandedPopupSize();
+		popup.modifyExpandedPopupSize(false);
 
-		var resize = google.maps.event.addDomListener(window, "resize", modifyExpandedPopupSize.bind(popup));
-		$popover.css({
-			zIndex: "+=1"
-		}).delay(400).queue(function() {
-			popup.draw();
-			$popover.find('.popover-content').fadeOut('fast', function() {
-				$popover.find('.popover-content').html('<div class="_scroll">' + popup.content + '</div>').fadeIn('fast');
-			});			
-			$("body").one("tap", contractExpandablePopup.bind(popup, tmpWidth, tmpHeight, tmpCenter, tmpContent, resize));
+		popup.map.setOptions({
+			draggable: false,
+			scrollwheel: false
 		});
 
-		$popover.on("click mouseenter mousemove mouseleave touchstart touchmove touchend tap", function(e) {
-			e.stopPropagation();
+		$popover.addClass('popup--moving');
+
+		var resize = google.maps.event.addDomListener(window, "resize", modifyExpandedPopupSize.bind(popup, true));
+		google.maps.event.addListenerOnce(popup.map, 'idle', function() {
+			popup.applyModifiedExpandedPopUpSize();
+			$popover.css({
+				zIndex: "+=1"
+			}).addClass('popup--expanded').removeClass('popup--moving').delay(800).queue(function() {
+				$popover.find('.popover-content').transition({
+					opacity: 0
+				}, 'fast', function() {
+					$popover.find('.popover-content').html('<div class="_scroll">' + popup.content + '</div>').transition({
+						opacity: 1
+					}, 'fast');
+				});
+				$("#map").one("tap", contractExpandablePopup.bind(popup, tmpWidth, tmpHeight, tmpCenter, tmpContent, resize));
+				$popover.dequeue();
+			});
 		});
 	}
 
@@ -420,17 +525,26 @@
 		var $popoverContent = $popover.find('.popover-content');
 		popup.width = width;
 		popup.height = height;
+		popup.content = content;
 
-		$popoverContent.fadeOut('fast', function() {
+		$popoverContent.transition({
+			opacity: 0
+		}, 'fast', function() {
 			popup.map.panTo(center);
 			$popover.css({
 				height: height,
 				width: width,
 				zIndex: "-=1"
-			});
+			}).removeClass('popup--expanded');
 			popup.draw();
-			$popoverContent.html(content).fadeIn('fast');
+			$popoverContent.html(content).transition({
+				opacity: 1
+			}, 'fast');
 			$popover.one('tap', expandExpandablePopup.bind(popup));
+			popup.map.setOptions({
+				draggable: true,
+				scrollwheel: true
+			});
 		});
 
 		google.maps.event.removeListener(resize);
