@@ -174,10 +174,22 @@
         it.elements.$overlay.find("#sign_out").on("tap",function(){
         	location.href="http://localhost:3000/logout";
         });
-        it.elements.$overlay.find("#overlay__goimadoko").on("tap",function(){
-        	
-        });
         /*瑛彦が書いた*/
+
+		it.elements.$overlay.find("#overlay__goimadoko").on("tap", function() {
+			it.elements.$overlay.transition({
+				opacity: 0
+			}, function() {
+				setTimeout(function() {
+					it.elements.$base.addClass('base--sidebaropened');
+					google.maps.event.trigger(it.map, "resize");
+				}, 400);
+				it.elements.$base.addClass('base--started');
+				it.elements.$overlay.css({
+					display: "none"
+				});
+			});
+		})
 
 		// アリバイ作成(サイドバー)
 		$("#change_alibi").on("tap", searchRoot.bind(it));
@@ -269,6 +281,7 @@
 		};
 		it.directionsService.route(request, (function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
+				console.log(result);
 				it.directionsDisplay.setDirections(result);
 			}
 		}).bind(it));
