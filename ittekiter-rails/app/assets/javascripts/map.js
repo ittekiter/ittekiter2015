@@ -279,12 +279,19 @@
 			destination: it.searchData.to.geometry.location,
 			travelMode: google.maps.TravelMode.DRIVING
 		};
-		it.directionsService.route(request, (function(result, status) {
+		it.directionsService.route(request, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
-				console.log(result);
+				var sendData = {
+					origin: it.searchData.from.geometry.location,
+					destination: it.searchData.to.geometry.location,
+					route_object: result
+				};
+				// $.post('alibis/add/', sendData, function() {
+				// 	console.log('send success.');
+				// });
 				it.directionsDisplay.setDirections(result);
 			}
-		}).bind(it));
+		});
 
 		// ExpandablePopupのテスト
 		// var start = new ExpandablePopup(it.map, it.searchData.from.geometry.location, it.searchData.from.name);
@@ -314,6 +321,16 @@
 			}
 		});
 	};
+
+	function showAlibiList(alibi) {
+
+	}
+
+	function addAlibi() {
+		var count = $(".alibi-list__panel").length;
+		var template = '<div class="panel panel-default alibi-list__panel"> <div class="panel-heading" role="tab" id="headingOne"> <h4 class="panel-title"> <a role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list__panel'+count+'" aria-expanded="true" aria-controls="alibi-list__panel'+count+'"> アリバイ #1 </a> </h4> </div> <div id="alibi-list__panel'+count+'" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="#alibi-list__heading'+count+'"> <div class="panel-body"> <form> <div class="form-group"> <label for="change_from">出発地</label> <input id="change_from" class="form-control where_from" type="text" placeholder="どこから？"> </div> <div class="form-group"> <label for="change_to">目的地</label> <input id="change_to" class="form-control where_to" type="text" placeholder="どこいく？"> </div> <div class="form-group"> <label for="change_date">日時</label> <input id="change_date" class="form-control when_date" type="text" placeholder="いついく？"> <input id="change_time" class="form-control when_time" type="text" placeholder="時間"> </div> <button id="change_alibi" type="button" class="btn btn-primary btn-block search_root" disabled>検索</button> </form> </div> </div> </div>';
+		$("#alibi-list").append(template);
+	}
 
 	/**
 	 * 与えられたPlaceのポップアップ用の情報を取得
