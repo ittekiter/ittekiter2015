@@ -284,11 +284,13 @@
 				var sendData = {
 					origin: it.searchData.from.geometry.location,
 					destination: it.searchData.to.geometry.location,
-					route_object: result
+					route_object: result,
+					dep_date: it.searchData.date,
+					dep_time: it.searchData.time
 				};
-				// $.post('alibis/add/', sendData, function() {
-				// 	console.log('send success.');
-				// });
+				$.post('alibis/add/', sendData, function() {
+					console.log('send success.');
+				});
 				it.directionsDisplay.setDirections(result);
 			}
 		});
