@@ -5,11 +5,11 @@ Rails.application.routes.draw do
   # See how all your routes lay out with "rake routes".
 
   # You can have the root of your site routed with "root"
-
-  root 'tests#index'
+  #post "/add"=>"alibis#add"
+  root 'alibis#index'
   get "/auth/twitter/callback" => "sessions#callback"
   get "/logout" => "sessions#destroy", :as => :logout
-
+  post "/add" => "sessions#add"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
