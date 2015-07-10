@@ -268,7 +268,7 @@
 	/**
 	 * ルートの検索・描画
 	 */
-	function searchRoot() {
+	 function searchRoot() {
 		var it = this;
 
 		console.log(it.searchData.from, it.searchData.to, it.searchData.date, it.searchData.time);
@@ -279,12 +279,22 @@
 			destination: it.searchData.to.geometry.location,
 			travelMode: google.maps.TravelMode.DRIVING
 		};
-		it.directionsService.route(request, (function(result, status) {
+		it.directionsService.route(request, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
-				console.log(result);
+				var sendData = {
+					origin: it.searchData.from.geometry.location,
+					destination: it.searchData.to.geometry.location,
+					route_object: result,
+					dep_date: it.searchData.date,
+					dep_time: it.searchData.time
+				};
+				$.post("/add", "sendData" , function() {
+					console.log('send success.');
+				});
+		        //$.ajax({url:"/add",type:"post"})
 				it.directionsDisplay.setDirections(result);
 			}
-		}).bind(it));
+		});
 
 		// ExpandablePopupのテスト
 		// var start = new ExpandablePopup(it.map, it.searchData.from.geometry.location, it.searchData.from.name);
