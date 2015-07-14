@@ -15,7 +15,7 @@ class SessionsController < ApplicationController
 =end      
       end
     #text = sprintf("yahoooooo!",Time.now)
-    test.update("yahiii!")
+    #test.update("yahiii!")
     session[:user_id] = user.id
     redirect_to root_url
   end

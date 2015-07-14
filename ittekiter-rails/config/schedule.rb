@@ -20,7 +20,7 @@
 # Learn more: http://github.com/javan/whenever
 
 set :output, 'log/crontab.log'
-
-every 2.minutes do
-       runner "Batch::Helloworld.helloworld"
+set :environment, 'development'
+every 1.minutes do
+	runner "Batch::Helloworld.referen"
 end     

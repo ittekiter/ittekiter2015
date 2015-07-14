@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150708071454) do
+ActiveRecord::Schema.define(version: 20150712095422) do
 
   create_table "alibis", force: :cascade do |t|
     t.string   "dep"
@@ -24,6 +24,14 @@ ActiveRecord::Schema.define(version: 20150708071454) do
   end
 
   create_table "tests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "twiconts", force: :cascade do |t|
+    t.datetime "twidt"
+    t.string   "twict"
+    t.string   "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
