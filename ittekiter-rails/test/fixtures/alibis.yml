@@ -3,6 +3,7 @@
 one:
   dep: MyString
   des: MyString
+  dep_date: MyString
   dep_time: MyString
   route_object: MyString
   user_id: MyString
@@ -10,6 +11,7 @@ one:
 two:
   dep: MyString
   des: MyString
+  dep_date: MyString
   dep_time: MyString
   route_object: MyString
   user_id: MyString

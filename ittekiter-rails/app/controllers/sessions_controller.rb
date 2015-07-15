@@ -3,6 +3,7 @@ class SessionsController < ApplicationController
   def callback
     auth = request.env["omniauth.auth"]
     user = User.find_by_provider_and_uid(auth["provider"],auth["uid"]) || User.create_with_omniauth(auth)
+<<<<<<< HEAD
 
     test = Twitter::REST::Client.new do |config|
       config.consumer_key        = "teo4El7z2U10XsJIGjRiH0ncc"
@@ -16,12 +17,10 @@ class SessionsController < ApplicationController
       end
     #text = sprintf("yahoooooo!",Time.now)
     #test.update("yahiii!")
+=======
+>>>>>>> afffdd9fd8f4bdcc9547e04115edf4bc4d10eb85
     session[:user_id] = user.id
-    redirect_to root_url
-  end
-  def add
-    auth = request.env["omniauth.auth"]
-    alibi = Alibi.create_with_get(auth)
+    session[:uid] = user.uid
     redirect_to root_url
   end
   def destroy

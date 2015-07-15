@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :alibis
+  resources :alibis
   resources :tests
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
@@ -9,7 +10,7 @@ Rails.application.routes.draw do
   root 'alibis#index'
   get "/auth/twitter/callback" => "sessions#callback"
   get "/logout" => "sessions#destroy", :as => :logout
-  post "/add" => "sessions#add"
+  post "/add" => "alibis#add"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
