@@ -41,9 +41,9 @@ class Batch::Helloworld
   end
 
   def self.timeset
-    time = Time.new(2015,07,01,10,10)
+    time = Time.new(2015,07,12,10,10)
     user_name = "askldjfaksjdfkl"
-    contents = "Hello  Wod2ld2d !!!!!"
+    contents = "Hello  Wod2ldddaa2d !!!!!"
     t = Twicont.create(:twidt => time,:twict => contents,:name => user_name)
   end
 end
