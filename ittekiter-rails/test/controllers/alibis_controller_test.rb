@@ -18,7 +18,7 @@ class AlibisControllerTest < ActionController::TestCase
 
   test "should create alibi" do
     assert_difference('Alibi.count') do
-      post :create, alibi: { dep: @alibi.dep, dep_date: @alibi.dep_date, dep_time: @alibi.dep_time, des: @alibi.des, route_object: @alibi.route_object, user_id: @alibi.user_id }
+      post :create, alibi: { dep_time: @alibi.dep_time, route_object: @alibi.route_object, user_id: @alibi.user_id }
     end
 
     assert_redirected_to alibi_path(assigns(:alibi))
@@ -35,7 +35,7 @@ class AlibisControllerTest < ActionController::TestCase
   end
 
   test "should update alibi" do
-    patch :update, id: @alibi, alibi: { dep: @alibi.dep, dep_date: @alibi.dep_date, dep_time: @alibi.dep_time, des: @alibi.des, route_object: @alibi.route_object, user_id: @alibi.user_id }
+    patch :update, id: @alibi, alibi: { dep_time: @alibi.dep_time, route_object: @alibi.route_object, user_id: @alibi.user_id }
     assert_redirected_to alibi_path(assigns(:alibi))
   end
 

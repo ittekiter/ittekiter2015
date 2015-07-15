@@ -11,17 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
-ActiveRecord::Schema.define(version: 20150712095422) do
-=======
-ActiveRecord::Schema.define(version: 20150714071913) do
->>>>>>> afffdd9fd8f4bdcc9547e04115edf4bc4d10eb85
+ActiveRecord::Schema.define(version: 20150715113119) do
 
   create_table "alibis", force: :cascade do |t|
-    t.string   "dep"
-    t.string   "des"
-    t.string   "dep_date"
-    t.string   "dep_time"
+    t.datetime "dep_time"
     t.string   "route_object"
     t.string   "user_id"
     t.datetime "created_at",   null: false

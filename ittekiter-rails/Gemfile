@@ -35,6 +35,8 @@ gem 'execjs'
 # Twitter社が提供しているCSSとJavaScriptのフレームワーク
 gem 'twitter-bootstrap-rails'
 
+gem 'whenever'
+
 gem 'gmaps4rails'
 gem 'geocoder'
 gem "omniauth"

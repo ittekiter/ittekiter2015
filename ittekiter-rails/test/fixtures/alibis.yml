@@ -1,17 +1,11 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  dep: MyString
-  des: MyString
-  dep_date: MyString
-  dep_time: MyString
+  dep_time: 2015-07-15 20:31:19
   route_object: MyString
   user_id: MyString
 
 two:
-  dep: MyString
-  des: MyString
-  dep_date: MyString
-  dep_time: MyString
+  dep_time: 2015-07-15 20:31:19
   route_object: MyString
   user_id: MyString
