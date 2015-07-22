@@ -7326,6 +7326,90 @@ fieldset[disabled] #base__toggle_sidebar.active {
     width: 41.66666667%;
   }
 }
+.form-places-group {
+  position: relative;
+  display: table;
+  border-collapse: separate;
+}
+.form-places-group:hover .form-places-remove {
+  display: block;
+}
+.form-places {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555555;
+  background-color: #ffffff;
+  background-image: none;
+  border: none;
+  border-bottom: 1px solid #cccccc;
+  -webkit-transition: border-color ease-in-out 0.15s;
+  -o-transition: border-color ease-in-out 0.15s;
+  transition: border-color ease-in-out 0.15s;
+}
+.form-places:focus {
+  border-color: #66afe9;
+  outline: 0;
+}
+.form-places:hover {
+  background-color: #eeeeee;
+}
+.form-places-addon {
+  padding: 6px 6px;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1;
+  color: #555555;
+  text-align: center;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+  display: table-cell;
+}
+.form-places-addon-inner {
+  display: block;
+  width: 14px;
+}
+.form-places-button {
+  display: block;
+  float: right;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555555;
+  background-color: #ffffff;
+  background-image: none;
+  border: none;
+  -webkit-transition: border-color ease-in-out 0.15s;
+  -o-transition: border-color ease-in-out 0.15s;
+  transition: border-color ease-in-out 0.15s;
+}
+.form-places-button:hover {
+  background-color: #eeeeee;
+}
+.form-places-remove {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  display: none;
+}
+.form-places-remove:hover {
+  background-color: #555555;
+}
+.form-places-remove:active {
+  background-color: #222222;
+}
+.form-places-date {
+  width: 49%;
+  float: left;
+}
+.form-places-date + .form-places-date {
+  margin-left: 2%;
+}
 /*---------------------------------
 	Utilities
 -----------------------------------*/

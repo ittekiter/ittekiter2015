@@ -35,30 +35,39 @@
 				</div>
 				<div class="panel-group" id="alibi-list" role="tablist" aria-multiselectable="true">
 					<div class="panel panel-default">
-						<div class="panel-heading" role="tab" id="headingTwo">
+						<div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-add" aria-expanded="false" aria-controls="alibi-list-add">
 							<h4 class="panel-title">
-							<a class="collapsed" role="button" data-toggle="collapse" data-parent="#alibai-list" href="#alibai-list__add" aria-expanded="false" aria-controls="alibai-list__add">
 							<i class="glyphicon glyphicon-plus"></i>&emsp;新規作成
-							</a>
 							</h4>
 						</div>
-						<div id="alibai-list__add" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingAlibiListAdd">
+						<div id="alibi-list-add" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListAdd">
 							<div class="panel-body">
 								<form>
 									<div class="form-group">
-										<label for="change_from">出発地</label>
-										<input id="change_from" class="form-control" type="text" placeholder="どこから？">
+										<label>出発地</label>
+										<div class="form-places-group">
+											<span class="form-places-addon"><span class="form-places-addon-inner">A.</span></span>
+											<input role="button" class="form-places place-origin" type="text" placeholder="どこから？">
+										</div>
+									</div>
+									<div class="form-group" style="margin-bottom: 0;">
+										<label>目的地</label>
+										<div class="form-places-group">
+											<span class="form-places-addon"><span class="form-places-addon-inner">B.</span></span>
+											<input role="button" class="form-places place-destination" type="text" placeholder="どこいく？">
+										</div>
+										<div class="clearfix">
+											<span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span>
+										</div>
 									</div>
 									<div class="form-group">
-										<label for="change_to">目的地</label>
-										<input id="change_to" class="form-control" type="text" placeholder="どこいく？">
+										<label>日時</label>
+										<div class="clearfix">
+											<input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？">
+											<input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間">
+										</div>
 									</div>
-									<div class="form-group">
-										<label for="change_date">日時</label>
-										<input id="change_date" class="form-control" type="text" placeholder="いついく？">
-										<input id="change_time" class="form-control" type="text" placeholder="時間">
-									</div>
-									<button id="change_alibi" type="button" class="btn btn-primary btn-block search_root" disabled>再検索</button>
+									<button type="button" class="btn btn-primary btn-block search_root add_root" disabled>作成</button>
 								</form>
 							</div>
 						</div>
@@ -80,14 +89,14 @@
 					<div id="overlay__form__conntent">
 						<form id="overlay__form__content__inner">
 							<div class="form-group">
-								<input id="set_from" class="form-control where_from" type="text" placeholder="どこから？">
+								<input id="set_from" class="form-control where_from place-origin" type="text" placeholder="どこから？">
 							</div>
 							<div class="form-group">
-								<input id="set_to" class="form-control where_to" type="text" placeholder="どこいく？">
+								<input id="set_to" class="form-control where_to place-destination" type="text" placeholder="どこいく？">
 							</div>
 							<div class="form-group">
-								<input id="set_date" class="form-control when_date" type="text" placeholder="いついく？">
-								<input id="set_time" class="form-control when_time" type="text" placeholder="時間">
+								<input id="set_date" class="form-control when_date place-day" type="text" placeholder="いついく？">
+								<input id="set_time" class="form-control when_time place-time" type="text" placeholder="時間">
 							</div>
 							<div class="form-group">
 								<button id="make_alibi" type="button" class="btn btn-primary btn-block search_root" disabled>アリバイ作成</button>

@@ -9,29 +9,13 @@
 	function Ittekiter() {
 		Ittekiter.prototype.setOverlay();
 		Ittekiter.prototype.initMap();
-
-		// ルート検索フィールの埋まり具合
-		this.searchEnable = {
-			from: false,
-			to: false,
-			date: false,
-			time: false
-		};
-
-		// ルート検索用のデータ
-		this.searchData = {
-			from: null,
-			to: null,
-			date: null,
-			time: null
-		};
 	}
 
 	Ittekiter["prototype"]["initMap"] = initMap;
 	Ittekiter["prototype"]["setOverlay"] = setOverlay;
 	Ittekiter["prototype"]["setSize"] = setSize;
 	Ittekiter["prototype"]["setEvent"] = setEvent;
-	Ittekiter["prototype"]["searchRoot"] = searchRoot;
+	Ittekiter["prototype"]["addAlibi"] = addAlibi;
 	
 	/**
 	 * マップの初期化
@@ -46,9 +30,11 @@
 		};
 
 		this.map = new google.maps.Map(document.getElementById("map"), opts);
-		this.directionsService = new google.maps.DirectionsService();
-		this.directionsDisplay = new google.maps.DirectionsRenderer();
-		this.directionsDisplay.setMap(this.map);
+		// this.directionsService = new google.maps.DirectionsService();
+		// this.directionsDisplay = new google.maps.DirectionsRenderer();
+		// this.directionsDisplay.setMap(this.map);
+		this.rootSearcher = new RootSearcher(this.map, $("#overlay__form__content__inner"));
+		this.sidebarSearcher = new SidebarRootSearcher(this, $("#alibi-list-add"));
 
 		// POIのポップアップを無効化
 		(function fixInfoWindow() {
@@ -84,29 +70,29 @@
 
 		this.elements.$overlay__inner = this.elements.$overlay.find("#overlay__inner");
 
-		// プレイスオートコンプリート
-		var placesOptions = {
-			types: ['establishment']
-		};
-		// スタート画面のフォーム
-		this.setFrom = new google.maps.places.Autocomplete(this.elements.$set_from[0], placesOptions);
-		this.setTo = new google.maps.places.Autocomplete(this.elements.$set_to[0], placesOptions);
-		// サイドバーのフォーム
-		this.changeFrom = new google.maps.places.Autocomplete(this.elements.$change_from[0], placesOptions);
-		this.changeTo = new google.maps.places.Autocomplete(this.elements.$change_to[0], placesOptions);
+		// // プレイスオートコンプリート
+		// var placesOptions = {
+		// 	types: ['establishment']
+		// };
+		// // スタート画面のフォーム
+		// this.setFrom = new google.maps.places.Autocomplete(this.elements.$set_from[0], placesOptions);
+		// this.setTo = new google.maps.places.Autocomplete(this.elements.$set_to[0], placesOptions);
+		// // サイドバーのフォーム
+		// // this.changeFrom = new google.maps.places.Autocomplete(this.elements.$change_from[0], placesOptions);
+		// // this.changeTo = new google.maps.places.Autocomplete(this.elements.$change_to[0], placesOptions);
 
-		// picker.js + picker.date.js + picker.time.js + legacy.js
-		// (Styling) default.css + default.date.css + default.time.css
-		var pickerOptions = {
-			container: '#picker_container',
-			clear: ''
-		}
-		// スタート画面のフォーム
-		this.setDate = this.elements.$set_date.pickadate(pickerOptions);
-		this.setTime = this.elements.$set_time.pickatime(pickerOptions);
-		// サイドバーのフォーム
-		this.changeDate = this.elements.$change_date.pickadate(pickerOptions);
-		this.changeTime = this.elements.$change_time.pickatime(pickerOptions);
+		// // picker.js + picker.date.js + picker.time.js + legacy.js
+		// // (Styling) default.css + default.date.css + default.time.css
+		// var pickerOptions = {
+		// 	container: '#picker_container',
+		// 	clear: ''
+		// }
+		// // スタート画面のフォーム
+		// this.setDate = this.elements.$set_date.pickadate(pickerOptions);
+		// this.setTime = this.elements.$set_time.pickatime(pickerOptions);
+		// // サイドバーのフォーム
+		// // this.changeDate = this.elements.$change_date.pickadate(pickerOptions);
+		// // this.changeTime = this.elements.$change_time.pickatime(pickerOptions);
 	};
 
 	/**
@@ -130,22 +116,22 @@
 	function setEvent() {
 		var it = this;
 
-		// フォームチェック
-		// オートコンプリートのサジェスチョン選択時	
-		google.maps.event.addListener(it.setFrom, 'place_changed', changePlace.bind(it, 'from', it.setFrom));
-		google.maps.event.addListener(it.setTo, 'place_changed', changePlace.bind(it, 'to', it.setTo));
-		google.maps.event.addListener(it.changeFrom, 'place_changed', changePlace.bind(it, 'from', it.changeFrom));
-		google.maps.event.addListener(it.changeTo, 'place_changed', changePlace.bind(it, 'to', it.changeTo));
-		// 場所名書き換え時
-		it.elements.$set_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$set_from));
-		it.elements.$set_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$set_to));
-		it.elements.$change_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$change_from));
-		it.elements.$change_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$change_to));
-		// 日時選択時
-		it.elements.$set_date.on("change", changeDateTime.bind(it, 'date', it.setDate));
-		it.elements.$set_time.on("change", changeDateTime.bind(it, 'time', it.setTime));
-		it.elements.$change_date.on("change", changeDateTime.bind(it, 'date', it.changeDate));
-		it.elements.$change_time.on("change", changeDateTime.bind(it, 'time', it.changeTime));
+		// // フォームチェック
+		// // オートコンプリートのサジェスチョン選択時
+		// google.maps.event.addListener(it.setFrom, 'place_changed', changePlace.bind(it, 'from', it.setFrom));
+		// google.maps.event.addListener(it.setTo, 'place_changed', changePlace.bind(it, 'to', it.setTo));
+		// // google.maps.event.addListener(it.changeFrom, 'place_changed', changePlace.bind(it, 'from', it.changeFrom));
+		// // google.maps.event.addListener(it.changeTo, 'place_changed', changePlace.bind(it, 'to', it.changeTo));
+		// // 場所名書き換え時
+		// it.elements.$set_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$set_from));
+		// it.elements.$set_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$set_to));
+		// // it.elements.$change_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$change_from));
+		// // it.elements.$change_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$change_to));
+		// // 日時選択時
+		// it.elements.$set_date.on("change", changeDateTime.bind(it, 'date', it.setDate));
+		// it.elements.$set_time.on("change", changeDateTime.bind(it, 'time', it.setTime));
+		// // it.elements.$change_date.on("change", changeDateTime.bind(it, 'date', it.changeDate));
+		// // it.elements.$change_time.on("change", changeDateTime.bind(it, 'time', it.changeTime));
 
 		// アリバイ作成(スタート画面)
 		// "tap"(EventType): jquery.finger.js (click + touch)
@@ -157,7 +143,7 @@
 				opacity: 0
 			}, function() {
 				setTimeout(function() {
-					it.searchRoot();
+					it.rootSearcher.searchRoot(addAlibi.bind(it));
 					google.maps.event.trigger(it.map, "resize");
 				}, 400);
 				it.elements.$base.addClass('base--started');
@@ -182,6 +168,7 @@
 			}, function() {
 				setTimeout(function() {
 					it.elements.$base.addClass('base--sidebaropened');
+					$(".panel-heading[href=#alibi-list-add]").trigger('click');
 					google.maps.event.trigger(it.map, "resize");
 				}, 400);
 				it.elements.$base.addClass('base--started');
@@ -190,9 +177,6 @@
 				});
 			});
 		})
-
-		// アリバイ作成(サイドバー)
-		$("#change_alibi").on("tap", searchRoot.bind(it));
 
 		// サイドバートグル
 		$("#base__toggle_sidebar").on("tap", function() {
@@ -214,15 +198,173 @@
 	};
 
 	/**
+	 * addAlibi
+	 * @param {google.maps.DirectionsResult} root      ルート
+	 * @param {Date}                         departure 出発日時
+	 */
+	function addAlibi(root, departure) {
+		var number = $(".alibi-list-item").length;
+		var title = (function() {
+			var title = root.request.destination.place.name;
+			if (root.request.waypoints.length > 0)
+				title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
+			// title += '<br><small>'root'</small>'
+			title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
+			return title;
+		})();
+		var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+number+'" aria-expanded="false" aria-controls="alibi-list-item'+number+'"> <h4 class="panel-title">'+title+'</h4> </div> <div id="alibi-list-item'+number+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+number+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button> </form> </div> </div> </div>';
+		$(template).insertAfter('#alibi-list .panel:first');
+		var $item = $("#alibi-list-item"+number);
+
+		// 場所情報をフォームにパース
+		var $pd = $item.find(".form-places-group:first").find(".place-origin");
+		$pd.val(root.request.origin.value);
+		$pd.data("value", root.request.origin.value);
+		$pd.data("place", root.request.origin.place);
+
+		$.each(root.request.waypoints, function(i, waypoint) {
+			var $fg = $item.find(".form-places-group:last");
+			var $pd = $fg.find(".place-destination");
+			$pd.val(waypoint.location.value);
+			$pd.data("value", waypoint.location.value);
+			$pd.data("place", waypoint.location.place);
+			$fg.after('<div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">'+String.fromCharCode(i + 67)+'.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div>');
+		});
+
+		var $fg = $item.find(".form-places-group:last");
+		var $pd = $fg.find(".place-destination");
+		$pd.val(root.request.destination.value);
+		$pd.data("value", root.request.destination.value);
+		$pd.data("place", root.request.destination.place);
+		$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
+
+		// SidebarRootSearcherのインスタンスを生成
+		var sidebarSearcher = new SidebarRootSearcher(this, $item);
+		// 日時をパース
+		sidebarSearcher.searcher.setDateTime(departure);
+
+		$item.prev(".panel-heading").trigger("click");
+	}
+
+	function SidebarRootSearcher(it, $item) {
+		// イベントの設定
+		this.searcher = new RootSearcher(it.map, $item.find("form"));
+
+		var searcher = this.searcher;
+		$item.find(".modify_root").on("tap", function() {
+			$("#base").removeClass('base--sidebaropened');
+			searcher.searchRoot(function() {});
+		});
+		$item.find(".add_root").on("tap", function() {
+			$("#base").removeClass('base--sidebaropened');
+			searcher.searchRoot(addAlibi.bind(it));
+		});
+		$item.find(".form-places-add").on('tap', function() {
+			var $formGroup = $(this).closest(".form-group");
+			var length = $formGroup.find(".form-places-group").length;
+			if (length < 9) {
+				$formGroup.find(".form-places-remove").remove();
+				$('<div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">'+String.fromCharCode(length + 66)+'.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> <span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span> </div>').insertAfter($formGroup.find(".form-places-group:last"));
+				searcher.addDestination($formGroup.find(".place-destination:last")[0]);
+			}
+		})
+		$item.on('tap', ".form-places-remove", function() {
+			var $this = $(this);
+			var $formGroup = $this.closest(".form-group");
+			$this.closest(".form-places-group").remove();
+			if ($formGroup.find(".form-places-group").length > 1)
+				$formGroup.find(".form-places-group:last").append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
+		});
+	}
+
+	/**
+	 * ルート検索クラス
+	 * @param {google.maps.Map} map   Googleマップのインスタンス
+	 * @param {jQuery Object}   $form ルート検索用のフォーム
+	 */
+	function RootSearcher(map, $form) {
+		// ルート検索フィールの埋まり具合
+		this.searchEnable = {
+			date: false,
+			time: false
+		};
+
+		// ルート検索用のデータ
+		this.searchData = {
+			date: null,
+			time: null
+		};
+
+		this.directionsDisplay.setMap(map);
+
+		this.$form = $form;
+		this.$placeOrigin = $form.find(".place-origin");
+		this.$search_root = $form.find(".search_root");
+
+		// プレイスオートコンプリート
+		this.placesOptions = {
+			types: ['establishment']
+		};
+
+		// スタート画面のフォーム
+		this.placeOrigin = new google.maps.places.Autocomplete(this.$placeOrigin[0], this.placesOptions);
+		google.maps.event.addListener(this.placeOrigin, 'place_changed', changePlace.bind(this, this.placeOrigin, this.$placeOrigin));
+		this.$placeOrigin.on("keydown keyup keypress change", checkPlace.bind(this, this.$placeOrigin));
+
+		this.placeDests = [];
+		var rs = this;
+		$.each($form.find(".place-destination"), function() {
+			rs.addDestination(this);
+		});
+
+		// picker.js + picker.date.js + picker.time.js + legacy.js
+		// (Styling) default.css + default.date.css + default.time.css
+		var pickerOptions = {
+			container: '#picker_container',
+			clear: ''
+		}
+		// スタート画面のフォーム
+		this.placeDay = $form.find(".place-day").pickadate(pickerOptions);
+		this.placeTime = $form.find(".place-time").pickatime(pickerOptions);
+		$form.find(".place-day").on("change", changeDateTime.bind(this, 'date', this.placeDay));
+		$form.find(".place-time").on("change", changeDateTime.bind(this, 'time', this.placeTime));
+	}
+
+	RootSearcher["prototype"]["directionsService"] = new google.maps.DirectionsService();
+	RootSearcher["prototype"]["directionsDisplay"] = new google.maps.DirectionsRenderer();
+	RootSearcher["prototype"]["addDestination"] = addDestination;
+	RootSearcher["prototype"]["checkPlace"] = checkPlace;
+	RootSearcher["prototype"]["changePlace"] = changePlace;
+	RootSearcher["prototype"]["changeDateTime"] = changeDateTime;
+	RootSearcher["prototype"]["setDateTime"] = setDateTime;
+	RootSearcher["prototype"]["checkForm"] = checkForm;
+	RootSearcher["prototype"]["searchRoot"] = searchRoot;
+
+	/**
+	 * 目的地を追加
+	 * @param {DOMElement} element .place-destination
+	 */
+	function addDestination(element) {
+		var autocomplete = new google.maps.places.Autocomplete(element, this.placesOptions);
+		var $el = $(element);
+		this.placeDests.push(autocomplete);
+		google.maps.event.addListener(autocomplete, 'place_changed', changePlace.bind(this, autocomplete, $el));
+		$el.on("keydown keyup keypress change", checkPlace.bind(this, $el));
+		this.checkPlace($el);
+	}
+
+	/**
 	 * 場所フォームチェック
 	 * @param  {String}        type     'from' or 'to'(出発地 or 目的地)
-	 * @param  {$}             $element input要素のjQueryオブジェクト
+	 * @param  {jQuery Object} $element input要素のjQueryオブジェクト
 	 */
-	function checkPlace(type, $element) {
+	function checkPlace($element) {
 		// 選択済みの場所データから入力フィールドが変更されていれば拒否
-		if (this.searchData[type] && $element.val() !== this.searchData[type].name)
-			this.searchEnable[type] = false;
-		checkForm.call(this);
+		// if (this.searchData[type] && $element.val() !== this.searchData[type].name)
+		var value = $element.data("value");
+		if (typeof value !== "undefined" && value !== $element.val())
+			$element.data("searchEnable", false);
+		this.checkForm();
 	}
 
 	/**
@@ -230,14 +372,20 @@
 	 * @param  {String}                          type         'from' or 'to'(出発地 or 目的地)
 	 * @param  {google.maps.places.Autocomplete} autocomplete PlacesAutocomplate object
 	 */
-	function changePlace(type, autocomplete) {
-		// 場所データをキャッシュ
-		this.searchData[type] = autocomplete.getPlace();
+	function changePlace(autocomplete, $element) {
+		var place = autocomplete.getPlace();
+
+		// 場所名をキャッシュ
+		$element.data("value", $element.val());
+		// this.searchData[type] = autocomplete.getPlace();
+
 		// フォームの値を同期
-		$('.where_' + type).blur().val(this.searchData[type].name);
-		if (typeof this.searchData[type].geometry !== "undefined")
-			this.searchEnable[type] = true;
-		checkForm.call(this);
+		// $('.where_' + type).blur().val(this.searchData[type].name);
+		if (typeof place.geometry !== "undefined") {
+			$element.data("place", place);
+			$element.data("searchEnable", true);
+		}
+		this.checkForm();
 	}
 
 	/**
@@ -249,49 +397,84 @@
 		// 日時データをキャッシュ
 		this.searchData[type] = picker["picka" + type]("get", "select");
 		// フォームの値を同期
-		$('.when_' + type).val(picker["picka" + type]("get", "value"));
+		// $('.when_' + type).val(picker["picka" + type]("get", "value"));
 		this.searchEnable[type] = true;
-		checkForm.call(this);
+		this.checkForm();
+	}
+
+	/**
+	 * Dateを突っ込んでpickerに反映
+	 * @param {Date} date JavaScriptのDate型オブジェクト
+	 */
+	function setDateTime(date) {
+		this.placeDay.pickadate("set", "select", date);
+		this.placeTime.pickatime("set", "select", date);
 	}
 
 	/**
 	 * アリバイ作成フォームのチェック
 	 */
 	function checkForm() {
-		if (this.searchEnable.from && this.searchEnable.to && this.searchEnable.date && this.searchEnable.time) {
-			$(".search_root").removeAttr("disabled");
+		var placeEnable = true;
+		$.each(this.$form.find(".place-destination"), function() {
+			if ($(this).data("searchEnable") !== true)
+				placeEnable = false;
+		});
+		if (placeEnable && this.searchEnable.date && this.searchEnable.time) {
+			this.$search_root.removeAttr("disabled");
 		} else {
-			$(".search_root").attr("disabled", "");
+			this.$search_root.attr("disabled", "");
 		}
 	};
 
 	/**
 	 * ルートの検索・描画
 	 */
-	function searchRoot() {
-		var it = this;
+	function searchRoot(callback) {
+		var rs = this;
 
-		console.log(it.searchData.from, it.searchData.to, it.searchData.date, it.searchData.time);
-		it.elements.$base.removeClass('base--sidebaropened');
+		var dests = this.$form.find(".place-destination");
+		var waypoints = [];
+		for (var i = 0; i < dests.length - 1; i++) {
+			var $dest = $(dests[i])
+			var place = $dest.data("place");
+			var location = place.geometry.location;
+			location.place = place;
+			location.value = $dest.data("value");
+			waypoints.push({
+				location: location,
+				stopover: true
+			});
+		}
 
+		var placeOrigin = this.$placeOrigin.data("place");
+		var $dest = $(dests[dests.length - 1]);
+		var placeDest = $dest.data("place");
 		var request = {
-			origin: it.searchData.from.geometry.location,
-			destination: it.searchData.to.geometry.location,
+			origin: placeOrigin.geometry.location,
+			destination: placeDest.geometry.location,
+			waypoints: waypoints,
+			optimizeWaypoints: true,
 			travelMode: google.maps.TravelMode.DRIVING
 		};
-		it.directionsService.route(request, function(result, status) {
+		request.origin.place = placeOrigin;
+		request.origin.value = this.$placeOrigin.data("value");
+		request.destination.place = placeDest;
+		request.destination.value = $dest.data("value");
+
+		var departure = new Date(rs.searchData.date.obj.getTime() + rs.searchData.time.time * 60000);
+
+		rs.directionsService.route(request, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
 				var sendData = {
-					origin: it.searchData.from.geometry.location,
-					destination: it.searchData.to.geometry.location,
 					route_object: result,
-					dep_date: it.searchData.date,
-					dep_time: it.searchData.time
+					departure: departure
 				};
-				$.post('alibis/add/', sendData, function() {
-					console.log('send success.');
-				});
-				it.directionsDisplay.setDirections(result);
+				// $.post('alibis/add/', sendData, function() {
+				// 	console.log('send success.');
+				// });
+				rs.directionsDisplay.setDirections(result);
+				callback.call(null, result, departure);
 			}
 		});
 
@@ -299,39 +482,29 @@
 		// var start = new ExpandablePopup(it.map, it.searchData.from.geometry.location, it.searchData.from.name);
 		// var end = new ExpandablePopup(it.map, it.searchData.to.geometry.location, it.searchData.to.name);
 
-		var request = {
-			location: it.searchData.to.geometry.location,
-			radius: '2000',
-			types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
-		};
+		// var request = {
+		// 	location: rs.searchData.to.geometry.location,
+		// 	radius: '2000',
+		// 	types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
+		// };
 
-		if (typeof it.popups !== "undefined" && it.popups.length > 0) {
-			for (var i = 0; i < it.popups.length; i++) {
-				it.popups[i].setMap(null);
-			}
-		}
+		// if (typeof rs.popups !== "undefined" && rs.popups.length > 0) {
+		// 	for (var i = 0; i < rs.popups.length; i++) {
+		// 		rs.popups[i].setMap(null);
+		// 	}
+		// }
 
-		it.popups = [];
+		// rs.popups = [];
 
-		it.placesService = new google.maps.places.PlacesService(it.map);
-		it.placesService.nearbySearch(request, function (results, status) {
-			if (status == google.maps.places.PlacesServiceStatus.OK) {
-				for (var i = 0; i < results.length && i < 5; i++) {
-					it.popups[i] = new ExpandablePopup(it.map, results[i].geometry.location, results[i].name);
-					it.popups[i].loadContent = loadPlacesContent.bind(it.popups[i], results[i]);
-				}
-			}
-		});
-	};
-
-	function showAlibiList(alibi) {
-
-	}
-
-	function addAlibi() {
-		var count = $(".alibi-list__panel").length;
-		var template = '<div class="panel panel-default alibi-list__panel"> <div class="panel-heading" role="tab" id="headingOne"> <h4 class="panel-title"> <a role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list__panel'+count+'" aria-expanded="true" aria-controls="alibi-list__panel'+count+'"> アリバイ #1 </a> </h4> </div> <div id="alibi-list__panel'+count+'" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="#alibi-list__heading'+count+'"> <div class="panel-body"> <form> <div class="form-group"> <label for="change_from">出発地</label> <input id="change_from" class="form-control where_from" type="text" placeholder="どこから？"> </div> <div class="form-group"> <label for="change_to">目的地</label> <input id="change_to" class="form-control where_to" type="text" placeholder="どこいく？"> </div> <div class="form-group"> <label for="change_date">日時</label> <input id="change_date" class="form-control when_date" type="text" placeholder="いついく？"> <input id="change_time" class="form-control when_time" type="text" placeholder="時間"> </div> <button id="change_alibi" type="button" class="btn btn-primary btn-block search_root" disabled>検索</button> </form> </div> </div> </div>';
-		$("#alibi-list").append(template);
+		// rs.placesService = new google.maps.places.PlacesService(rs.map);
+		// rs.placesService.nearbySearch(request, function (results, status) {
+		// 	if (status == google.maps.places.PlacesServiceStatus.OK) {
+		// 		for (var i = 0; i < results.length && i < 5; i++) {
+		// 			rs.popups[i] = new ExpandablePopup(rs.map, results[i].geometry.location, results[i].name);
+		// 			rs.popups[i].loadContent = loadPlacesContent.bind(rs.popups[i], results[i]);
+		// 		}
+		// 	}
+		// });
 	}
 
 	/**
