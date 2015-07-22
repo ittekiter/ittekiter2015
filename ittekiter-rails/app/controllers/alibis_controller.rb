@@ -61,6 +61,10 @@ class AlibisController < ApplicationController
     end
   end
 
+  def add
+    @alibi = Alibi.create(route_object: params[:route_object],dep_time: params[:departure],user_id: current_user.uid)
+    redirect_to root_url
+  end
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_alibi
@@ -69,6 +73,6 @@ class AlibisController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def alibi_params
-      params.require(:alibi).permit(:dep, :des, :dep_time, :route_object, :user_id)
+      params.require(:alibi).permit(:dep_time, :route_object, :user_id)
     end
 end

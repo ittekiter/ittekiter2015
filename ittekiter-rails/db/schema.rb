@@ -11,12 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150619090057) do
+ActiveRecord::Schema.define(version: 20150715113119) do
 
   create_table "alibis", force: :cascade do |t|
-    t.string   "dep"
-    t.string   "des"
-    t.string   "dep_time"
+    t.datetime "dep_time"
     t.string   "route_object"
     t.string   "user_id"
     t.datetime "created_at",   null: false
@@ -28,13 +26,23 @@ ActiveRecord::Schema.define(version: 20150619090057) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "twiconts", force: :cascade do |t|
+    t.datetime "twidt"
+    t.string   "twict"
+    t.string   "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.string   "provider"
     t.string   "uid"
     t.string   "screen_name"
     t.string   "name"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
+    t.string   "access_token"
+    t.string   "access_token_secret"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
   end
 
 end

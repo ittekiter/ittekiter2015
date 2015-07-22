@@ -12,16 +12,8 @@
   <% end %>
 
   <div class="field">
-    <%= f.label :dep %><br>
-    <%= f.text_field :dep %>
-  </div>
-  <div class="field">
-    <%= f.label :des %><br>
-    <%= f.text_field :des %>
-  </div>
-  <div class="field">
     <%= f.label :dep_time %><br>
-    <%= f.text_field :dep_time %>
+    <%= f.datetime_select :dep_time %>
   </div>
   <div class="field">
     <%= f.label :route_object %><br>
