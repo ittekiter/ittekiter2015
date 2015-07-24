@@ -99,7 +99,7 @@
 								<input id="set_time" class="form-control when_time place-time" type="text" placeholder="時間">
 							</div>
 							<div class="form-group">
-								<button id="make_alibi" type="button" class="btn btn-primary btn-block search_root" disabled>アリバイ作成</button>
+								<button id="make_alibi" type="button" class="btn btn-primary btn-block search_root <% if !current_user %>abs_disable<% end %>" disabled>アリバイ作成</button>
 							</div>
 							<% if current_user %>
                              <button id="sign_out" type="button" class="btn btn-info btn-block redirect"><%= image_tag("twitter_w.svg",:size => "20x20") %> ログアウト</button>

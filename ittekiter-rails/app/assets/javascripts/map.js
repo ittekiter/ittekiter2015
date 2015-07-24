@@ -203,53 +203,78 @@
 	 * @param {Date}                         departure 出発日時
 	 */
 	function addAlibi(root, departure) {
+		var departure = new Date(departure * 1000);
 		var placesService = new google.maps.places.PlacesService(this.map);
 		var number = $(".alibi-list-item").length;
 		var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+number+'" aria-expanded="false" aria-controls="alibi-list-item'+number+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+number+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+number+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button> </form> </div> </div> </div>';
 		$(template).insertAfter('#alibi-list .panel:first');
 		var $item = $("#alibi-list-item"+number);
 
-		// 場所情報をフォームにパース
-		var $pd = $item.find(".form-places-group:first").find(".place-origin");
-		$pd.val(root.request.origin.value);
-		$pd.data("value", root.request.origin.value);
+		var loaded = 0;
+		var allLoad = new $.Event('allload');
 
+		function placeLoaded() {
+			loaded++;
+
+			if (loaded == root.request.waypoints.length + 2)
+				$item.trigger(allLoad);
+		}
+
+		// 場所情報をフォームにパース・
 		placesService.getDetails({placeId: root.request.origin.place_id}, function(result) {
-			$pd.data("place", result);
+			var $pd = $item.find(".place-origin");
+			$pd.val(root.request.origin.value);
+			$.data($pd[0], "value", root.request.origin.value);
+			$.data($pd[0], "place", result);
+			$.data($pd[0], "searchEnable", true);
+
+			placeLoaded();
 		});
 
 		$.each(root.request.waypoints, function(i, waypoint) {
 			var $fg = $item.find(".form-places-group:last");
 			var $pd = $fg.find(".place-destination");
 			$pd.val(waypoint.location.value);
-			$pd.data("value", waypoint.location.value);
 			placesService.getDetails({placeId: waypoint.location.place_id}, function(result) {
-				$pd.data("place", result);
+				$.data($pd[0], "value", waypoint.location.value);
+				$.data($pd[0], "place", result);
+				$.data($pd[0], "searchEnable", true);
+				placeLoaded();
 			});
 			$fg.after('<div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">'+String.fromCharCode(i + 67)+'.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div>');
 		});
 
-		var $fg = $item.find(".form-places-group:last");
-		var $pd = $fg.find(".place-destination");
-		$pd.val(root.request.destination.value);
-		$pd.data("value", root.request.destination.value);
 		placesService.getDetails({placeId: root.request.destination.place_id}, function(result) {
+			var $fg = $item.find(".form-places-group:last");
+			var $pd = $fg.find(".place-destination");
+			$pd.val(root.request.destination.value);
+			$.data($pd[0], "value", root.request.destination.value);
+			$.data($pd[0], "place", result);
+			$.data($pd[0], "searchEnable", true);
+
 			var title = result.name;
 			if (root.request.waypoints.length > 0)
 				title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
-			// title += '<br><small>'root'</small>'
 			title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
-			$pd.data("place", result);
-			$item.prev(".panel-heading").find(".panel-title").append(title);
+			$item.prev(".panel-heading").find(".panel-title").html(title);
+
+			placeLoaded();
+
+			if (root.request.waypoints.length > 0)
+				$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 		});
-		$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 
-		// SidebarRootSearcherのインスタンスを生成
-		var sidebarSearcher = new SidebarRootSearcher(this, $item);
-		// 日時をパース
-		sidebarSearcher.searcher.setDateTime(departure);
 
-		$item.prev(".panel-heading").trigger("click");
+		var it = this;
+		$item.one('allload', function() {
+			// SidebarRootSearcherのインスタンスを生成
+			var sidebarSearcher = new SidebarRootSearcher(it, $item);
+			// 日時をパース
+			sidebarSearcher.searcher.setDateTime(departure);
+			sidebarSearcher.searcher.checkForm();
+
+			$item.prev(".panel-heading").trigger("click");
+		});
 	}
 
 	function SidebarRootSearcher(it, $item) {
@@ -259,11 +284,21 @@
 		var searcher = this.searcher;
 		$item.find(".modify_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(function() {});
+			searcher.searchRoot(function(root, departure) {
+				var departure = new Date(departure * 1000);
+				var $destination = $item.find(".place-destination:last");
+				var title = $.data($destination[0], "place").name;
+				if (root.request.waypoints.length > 0)
+					title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
+				title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
+				$item.prev(".panel-heading").find(".panel-title").html(title);
+			});
 		});
 		$item.find(".add_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
 			searcher.searchRoot(addAlibi.bind(it));
+
+			$item.one('hidden.bs.collapse', clearForm.bind(searcher));
 		});
 		$item.find(".form-places-add").on('tap', function() {
 			var $formGroup = $(this).closest(".form-group");
@@ -271,7 +306,7 @@
 			if (length < 9) {
 				$formGroup.find(".form-places-remove").remove();
 				$('<div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">'+String.fromCharCode(length + 66)+'.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> <span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span> </div>').insertAfter($formGroup.find(".form-places-group:last"));
-				searcher.addDestination($formGroup.find(".place-destination:last")[0]);
+				searcher.addPlace($formGroup.find(".place-destination:last")[0]);
 			}
 		})
 		$item.on('tap', ".form-places-remove", function() {
@@ -304,23 +339,16 @@
 		this.directionsDisplay.setMap(map);
 
 		this.$form = $form;
-		this.$placeOrigin = $form.find(".place-origin");
-		this.$search_root = $form.find(".search_root");
+		this.$search_root = $form.find(".search_root:not(.abs_disable)");
 
 		// プレイスオートコンプリート
 		this.placesOptions = {
 			types: ['establishment']
 		};
 
-		// スタート画面のフォーム
-		this.placeOrigin = new google.maps.places.Autocomplete(this.$placeOrigin[0], this.placesOptions);
-		google.maps.event.addListener(this.placeOrigin, 'place_changed', changePlace.bind(this, this.placeOrigin, this.$placeOrigin));
-		this.$placeOrigin.on("keydown keyup keypress change", checkPlace.bind(this, this.$placeOrigin));
-
-		this.placeDests = [];
 		var rs = this;
-		$.each($form.find(".place-destination"), function() {
-			rs.addDestination(this);
+		$.each($form.find(".place-origin, .place-destination"), function() {
+			rs.addPlace(this);
 		});
 
 		// picker.js + picker.date.js + picker.time.js + legacy.js
@@ -330,19 +358,22 @@
 			clear: ''
 		}
 		// スタート画面のフォーム
-		this.placeDay = $form.find(".place-day").pickadate(pickerOptions);
-		this.placeTime = $form.find(".place-time").pickatime(pickerOptions);
-		$form.find(".place-day").on("change", changeDateTime.bind(this, 'date', this.placeDay));
-		$form.find(".place-time").on("change", changeDateTime.bind(this, 'time', this.placeTime));
+		var placeDay = $form.find(".place-day").pickadate(pickerOptions);
+		var placeTime = $form.find(".place-time").pickatime(pickerOptions);
+		this.dayPicker = placeDay.pickadate('picker');
+		this.timePicker = placeTime.pickatime('picker');
+		$form.find(".place-day").on("change", changeDateTime.bind(this, 'date', this.dayPicker));
+		$form.find(".place-time").on("change", changeDateTime.bind(this, 'time', this.timePicker));
 	}
 
 	RootSearcher["prototype"]["directionsService"] = new google.maps.DirectionsService();
 	RootSearcher["prototype"]["directionsDisplay"] = new google.maps.DirectionsRenderer();
-	RootSearcher["prototype"]["addDestination"] = addDestination;
+	RootSearcher["prototype"]["addPlace"] = addPlace;
 	RootSearcher["prototype"]["checkPlace"] = checkPlace;
 	RootSearcher["prototype"]["changePlace"] = changePlace;
 	RootSearcher["prototype"]["changeDateTime"] = changeDateTime;
 	RootSearcher["prototype"]["setDateTime"] = setDateTime;
+	RootSearcher["prototype"]["clearForm"] = clearForm;
 	RootSearcher["prototype"]["checkForm"] = checkForm;
 	RootSearcher["prototype"]["searchRoot"] = searchRoot;
 
@@ -350,10 +381,9 @@
 	 * 目的地を追加
 	 * @param {DOMElement} element .place-destination
 	 */
-	function addDestination(element) {
+	function addPlace(element) {
 		var autocomplete = new google.maps.places.Autocomplete(element, this.placesOptions);
 		var $el = $(element);
-		this.placeDests.push(autocomplete);
 		google.maps.event.addListener(autocomplete, 'place_changed', changePlace.bind(this, autocomplete, $el));
 		$el.on("keydown keyup keypress change", checkPlace.bind(this, $el));
 		this.checkPlace($el);
@@ -367,9 +397,9 @@
 	function checkPlace($element) {
 		// 選択済みの場所データから入力フィールドが変更されていれば拒否
 		// if (this.searchData[type] && $element.val() !== this.searchData[type].name)
-		var value = $element.data("value");
+		var value = $.data($element[0], "value");
 		if (typeof value !== "undefined" && value !== $element.val())
-			$element.data("searchEnable", false);
+			$.data($element[0], "searchEnable", false);
 		this.checkForm();
 	}
 
@@ -382,14 +412,14 @@
 		var place = autocomplete.getPlace();
 
 		// 場所名をキャッシュ
-		$element.data("value", $element.val());
+		$.data($element[0], "value", $element.val());
 		// this.searchData[type] = autocomplete.getPlace();
 
 		// フォームの値を同期
 		// $('.where_' + type).blur().val(this.searchData[type].name);
 		if (typeof place.geometry !== "undefined") {
-			$element.data("place", place);
-			$element.data("searchEnable", true);
+			$.data($element[0], "place", place);
+			$.data($element[0], "searchEnable", true);
 		}
 		this.checkForm();
 	}
@@ -401,10 +431,11 @@
 	 */
 	 function changeDateTime(type, picker) {
 		// 日時データをキャッシュ
-		this.searchData[type] = picker["picka" + type]("get", "select");
+		this.searchData[type] = picker.get("select");
 		// フォームの値を同期
-		// $('.when_' + type).val(picker["picka" + type]("get", "value"));
-		this.searchEnable[type] = true;
+		// $('.when_' + type).val(picker["picka" + type]("get"[0], "value"));
+		if (this.searchData[type] !== null)
+			this.searchEnable[type] = true;
 		this.checkForm();
 	}
 
@@ -413,8 +444,27 @@
 	 * @param {Date} date JavaScriptのDate型オブジェクト
 	 */
 	function setDateTime(date) {
-		this.placeDay.pickadate("set", "select", date);
-		this.placeTime.pickatime("set", "select", date);
+		this.dayPicker.set("select", date);
+		this.changeDateTime('date', this.dayPicker);
+
+		this.timePicker.set("select", date);
+		this.changeDateTime('time', this.timePicker);
+	}
+
+	/**
+	 * Dateを突っ込んでpickerに反映
+	 * @param {Date} date JavaScriptのDate型オブジェクト
+	 */
+	function clearForm() {
+		this.$form.find('.place-destination:not(:first)').closest('.form-places-group').remove();
+		this.$form.find(".place-origin, .place-destination").val("");
+		this.dayPicker.clear();
+		this.timePicker.clear();
+		this.changeDateTime('date', this.dayPicker);
+		this.changeDateTime('time', this.timePicker);
+		this.searchEnable.date = false;
+		this.searchEnable.time = false;
+		this.checkForm();
 	}
 
 	/**
@@ -422,8 +472,8 @@
 	 */
 	function checkForm() {
 		var placeEnable = true;
-		$.each(this.$form.find(".place-destination"), function() {
-			if ($(this).data("searchEnable") !== true)
+		$.each(this.$form.find(".place-origin, .place-destination"), function() {
+			if ($.data($(this)[0], "searchEnable") !== true)
 				placeEnable = false;
 		});
 		if (placeEnable && this.searchEnable.date && this.searchEnable.time) {
@@ -431,7 +481,7 @@
 		} else {
 			this.$search_root.attr("disabled", "");
 		}
-	};
+	}
 
 	/**
 	 * ルートの検索・描画
@@ -439,23 +489,24 @@
 	function searchRoot(callback) {
 		var rs = this;
 
-		var dests = this.$form.find(".place-destination");
+		var dests = this.$form.find(".place-origin, .place-destination");
 		var waypoints = [];
-		for (var i = 0; i < dests.length - 1; i++) {
+		for (var i = 1; i < dests.length - 1; i++) {
 			var $dest = $(dests[i])
-			var place = $dest.data("place");
+			var place = $.data($dest[0], "place");
 			var location = place.geometry.location;
 			location.place_id = place.place_id;
-			location.value = $dest.data("value");
+			location.value = $.data($dest[0], "value");
 			waypoints.push({
 				location: location,
 				stopover: true
 			});
 		}
 
-		var placeOrigin = this.$placeOrigin.data("place");
+		var $placeOrigin = $(dests[0]);
+		var placeOrigin = $.data($placeOrigin[0], "place");
 		var $dest = $(dests[dests.length - 1]);
-		var placeDest = $dest.data("place");
+		var placeDest = $.data($dest[0], "place");
 		var request = {
 			origin: placeOrigin.geometry.location,
 			destination: placeDest.geometry.location,
@@ -464,11 +515,11 @@
 			travelMode: google.maps.TravelMode.DRIVING
 		};
 		request.origin.place_id = placeOrigin.place_id;
-		request.origin.value = this.$placeOrigin.data("value");
+		request.origin.value = $.data($placeOrigin[0], "value");
 		request.destination.place_id = placeDest.place_id;
-		request.destination.value = $dest.data("value");
+		request.destination.value = $.data($dest[0], "value");
 
-		var departure = new Date(rs.searchData.date.obj.getTime() + rs.searchData.time.time * 60000);
+		var departure = parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60;
 
 		rs.directionsService.route(request, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
