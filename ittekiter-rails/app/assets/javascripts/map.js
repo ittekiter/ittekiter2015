@@ -209,7 +209,7 @@
 		var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+number+'" aria-expanded="false" aria-controls="alibi-list-item'+number+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+number+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+number+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button> </form> </div> </div> </div>';
 		$(template).insertAfter('#alibi-list .panel:first');
 		var $item = $("#alibi-list-item"+number);
-
+		
 		var loaded = 0;
 		var allLoad = new $.Event('allload');
 
@@ -264,7 +264,6 @@
 				$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 		});
 
-
 		var it = this;
 		$item.one('allload', function() {
 			// SidebarRootSearcherのインスタンスを生成
@@ -272,6 +271,10 @@
 			// 日時をパース
 			sidebarSearcher.searcher.setDateTime(departure);
 			sidebarSearcher.searcher.checkForm();
+
+			$item.on("shown.bs.collapse", function() {
+				sidebarSearcher.searcher.directionsDisplay.setDirections(root);
+			});
 
 			$item.prev(".panel-heading").trigger("click");
 		});
