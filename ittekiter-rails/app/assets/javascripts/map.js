@@ -379,6 +379,7 @@
 	RootSearcher["prototype"]["clearForm"] = clearForm;
 	RootSearcher["prototype"]["checkForm"] = checkForm;
 	RootSearcher["prototype"]["searchRoot"] = searchRoot;
+	RootSearcher["prototype"]["nobukiPop"] = nobukiPop;
 
 	/**
 	 * 目的地を追加
@@ -533,7 +534,7 @@
 				$.post("/add", sendData, function(){
 					console.log('send success.');
 				}, "json", "json/application");
-				rs.directionsDisplay.setDirections(result);
+				nobukiPop(rs,result);
 				callback.call(null, result, departure);
 			}
 		});
@@ -567,7 +568,38 @@
 		// });
 	}
 
-	/**
+	function nobukiPop(rs,res)
+	{
+		console.log(res);
+
+		rs.directionsDisplay.setDirections(res);
+		var request = {
+				location: res.routes[0].legs[0].start_location,
+		 		radius: '2000',
+		 		types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
+		 	};
+
+			if (typeof rs.popups !== "undefined" && rs.popups.length > 0) {
+		 		for (var i = 0; i < rs.popups.length; i++) {
+		 			rs.popups[i].setMap(null);
+		 		}
+			}
+			rs.popups = [];
+
+		rs.placesService = new google.maps.places.PlacesService(ittekiter.map);			
+
+		 rs.placesService.nearbySearch(request, function (results, status) {
+		 	if (status == google.maps.places.PlacesServiceStatus.OK) {
+		 		for (var i = 0; i < results.length && i < 5; i++) {
+		 			rs.popups[i] = new ExpandablePopup(ittekiter.map, results[i].geometry.location, results[i].name);
+		 			rs.popups[i].loadContent = loadPlacesContent.bind(rs.popups[i], results[i]);
+		 		}
+		 	}
+		 });
+		/*		 */
+	}
+
+		/**
 	 * 与えられたPlaceのポップアップ用の情報を取得
 	 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
 	 */
@@ -609,13 +641,15 @@
 	 				}
 	 			}
 
-	 			content += '<div class="form-group"><textarea class="form-control" rows="3"></textarea></div><button type="button" class="btn btn-info btn-lg btn-block">Tweet</button>';
+	 			content += '<div class="form-group"><textarea class="form-control" rows="6" maxlength="140">ここに入力して</textarea></div><br><button type="button" class="btn btn-info btn-lg btn-block">Tweet</button>';
 				content += '</div>';						// ._scroll
 
 				popup.content = content;
 			}
 		});
-}
+
+	}
+
 
 	/**
 	 * 地図上にクリックすると拡大するポップアップを表示(InfoWindow代替)
@@ -826,8 +860,9 @@
 /**
  * main
  */
+ var ittekiter;
  $(function() {
- 	var ittekiter = new Ittekiter();
+ 	ittekiter = new Ittekiter();
 
  	ittekiter.setSize();
  	ittekiter.setEvent();
