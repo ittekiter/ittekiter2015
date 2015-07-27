@@ -684,15 +684,22 @@
 
 	 			/*瑛彦が書いた*/
 	 			/* flickrのやつ　まだふわふわしてる*/	 			
-                /*var sendOption = {
+                /*
+                var sendOption = {
                 	method: "flickr.photos.search",
                 	api_key: "f51d23964bce3d29afd14807431a3dd4",
-                	text: details.name
+                	text: "筑波大学",//details.name
+                	format: "json"
                 }
                 var reponse = new Object();
                 $.post("https://api.flickr.com/services/rest",sendOption,function(reponse){
                 	console.log(response);
-                });*/
+                });
+                for(var i = 0; i < response.photos.total && i < 10;i++){
+                	var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
+	                content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
+                }
+                */                
                 /*瑛彦が書いた*/
 
 	 			if (details.photos) {

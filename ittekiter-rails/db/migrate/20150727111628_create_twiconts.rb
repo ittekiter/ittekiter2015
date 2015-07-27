@@ -4,6 +4,7 @@ class CreateTwiconts < ActiveRecord::Migration
       t.datetime :twidt
       t.string :twict
       t.string :name
+      t.string :twiloc
 
       t.timestamps null: false
     end

@@ -25,7 +25,6 @@ class AlibisController < ApplicationController
   # POST /alibis.json
   def create
     @alibi = Alibi.new(alibi_params)
-
     respond_to do |format|
       if @alibi.save
         format.html { redirect_to @alibi, notice: 'Alibi was successfully created.' }
@@ -67,14 +66,17 @@ class AlibisController < ApplicationController
   end
 
   def delete_alibi
-    Alibi.where(id: params[:id]).destroy
+    Alibi.delete(["id = ?",params[:id]])
     render nothing: true
   end
 
   def get_alibis
-    puts current_user.uid
     current_users_alibis = Alibi.where(user_id: current_user.uid)
     render json: current_users_alibis
+  end
+  def update_alibi
+    Alibi.where(["id = ?",params[:id]]).update(dep_time: params[:departure], route_object: params[:route_object])
+    render nothing: true
   end
 
   private
