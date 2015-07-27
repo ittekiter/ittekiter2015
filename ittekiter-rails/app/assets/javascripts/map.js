@@ -377,13 +377,22 @@
 
 		// picker.js + picker.date.js + picker.time.js + legacy.js
 		// (Styling) default.css + default.date.css + default.time.css
-		var pickerOptions = {
+		var dateOption = {
 			container: '#picker_container',
-			clear: ''
+			clear: '',
+			min: new Date(),
+			format: 'yyyy年m月d日'
 		}
+
+		var timeOption = {
+			container: '#picker_container',
+			clear: '',
+			format: 'HH:i'
+		}
+
 		// スタート画面のフォーム
-		var placeDay = $form.find(".place-day").pickadate(pickerOptions);
-		var placeTime = $form.find(".place-time").pickatime(pickerOptions);
+		var placeDay = $form.find(".place-day").pickadate(dateOption);
+		var placeTime = $form.find(".place-time").pickatime(timeOption);
 		this.dayPicker = placeDay.pickadate('picker');
 		this.timePicker = placeTime.pickatime('picker');
 		$form.find(".place-day").on("change", changeDateTime.bind(this, 'date', this.dayPicker));

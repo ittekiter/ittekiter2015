@@ -63,7 +63,7 @@ class AlibisController < ApplicationController
 
   def add
     @alibi = Alibi.create(route_object: params[:route_object],dep_time: params[:departure],user_id: current_user.uid)
-    redirect_to root_url
+    render nothing: true
   end
   private
     # Use callbacks to share common setup or constraints between actions.
