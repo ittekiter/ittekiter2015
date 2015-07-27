@@ -16,6 +16,8 @@
 	Ittekiter["prototype"]["setSize"] = setSize;
 	Ittekiter["prototype"]["setEvent"] = setEvent;
 	Ittekiter["prototype"]["addAlibi"] = addAlibi;
+	Ittekiter["prototype"]["renewMapDisplay"] = renewMapDisplay;
+	Ittekiter["prototype"]["imadokoDisplayFunc"] = imadokoDisplayFunc;
 	
 	/**
 	 * マップの初期化
@@ -30,11 +32,11 @@
 	 	};
 
 		this.map = new google.maps.Map(document.getElementById("map"), opts);
-		// this.directionsService = new google.maps.DirectionsService();
-		// this.directionsDisplay = new google.maps.DirectionsRenderer();
-		// this.directionsDisplay.setMap(this.map);
 		this.rootSearcher = new RootSearcher(this.map, $("#overlay__form__content__inner"));
 		this.sidebarSearcher = new SidebarRootSearcher(this, $("#alibi-list-add"));
+		this.imakoko = new google.maps.Marker({
+			map: this.map
+		});
 
 		// POIのポップアップを無効化
 		(function fixInfoWindow() {
@@ -69,30 +71,6 @@
 		};
 
 		this.elements.$overlay__inner = this.elements.$overlay.find("#overlay__inner");
-
-		// // プレイスオートコンプリート
-		// var placesOptions = {
-		// 	types: ['establishment']
-		// };
-		// // スタート画面のフォーム
-		// this.setFrom = new google.maps.places.Autocomplete(this.elements.$set_from[0], placesOptions);
-		// this.setTo = new google.maps.places.Autocomplete(this.elements.$set_to[0], placesOptions);
-		// // サイドバーのフォーム
-		// // this.changeFrom = new google.maps.places.Autocomplete(this.elements.$change_from[0], placesOptions);
-		// // this.changeTo = new google.maps.places.Autocomplete(this.elements.$change_to[0], placesOptions);
-
-		// // picker.js + picker.date.js + picker.time.js + legacy.js
-		// // (Styling) default.css + default.date.css + default.time.css
-		// var pickerOptions = {
-		// 	container: '#picker_container',
-		// 	clear: ''
-		// }
-		// // スタート画面のフォーム
-		// this.setDate = this.elements.$set_date.pickadate(pickerOptions);
-		// this.setTime = this.elements.$set_time.pickatime(pickerOptions);
-		// // サイドバーのフォーム
-		// // this.changeDate = this.elements.$change_date.pickadate(pickerOptions);
-		// // this.changeTime = this.elements.$change_time.pickatime(pickerOptions);
 	};
 
 	/**
@@ -115,23 +93,6 @@
 	 */
 	 function setEvent() {
 	 	var it = this;
-
-		// // フォームチェック
-		// // オートコンプリートのサジェスチョン選択時
-		// google.maps.event.addListener(it.setFrom, 'place_changed', changePlace.bind(it, 'from', it.setFrom));
-		// google.maps.event.addListener(it.setTo, 'place_changed', changePlace.bind(it, 'to', it.setTo));
-		// // google.maps.event.addListener(it.changeFrom, 'place_changed', changePlace.bind(it, 'from', it.changeFrom));
-		// // google.maps.event.addListener(it.changeTo, 'place_changed', changePlace.bind(it, 'to', it.changeTo));
-		// // 場所名書き換え時
-		// it.elements.$set_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$set_from));
-		// it.elements.$set_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$set_to));
-		// // it.elements.$change_from.on("keydown keyup keypress change", checkPlace.bind(it, 'from', it.elements.$change_from));
-		// // it.elements.$change_to.on("keydown keyup keypress change", checkPlace.bind(it, 'to', it.elements.$change_to));
-		// // 日時選択時
-		// it.elements.$set_date.on("change", changeDateTime.bind(it, 'date', it.setDate));
-		// it.elements.$set_time.on("change", changeDateTime.bind(it, 'time', it.setTime));
-		// // it.elements.$change_date.on("change", changeDateTime.bind(it, 'date', it.changeDate));
-		// // it.elements.$change_time.on("change", changeDateTime.bind(it, 'time', it.changeTime));
 
 		// アリバイ作成(スタート画面)
 		// "tap"(EventType): jquery.finger.js (click + touch)
@@ -209,6 +170,9 @@
 		var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+number+'" aria-expanded="false" aria-controls="alibi-list-item'+number+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+number+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+number+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button> </form> </div> </div> </div>';
 		$(template).insertAfter('#alibi-list .panel:first');
 		var $item = $("#alibi-list-item"+number);
+
+		$.data($item[0], 'departure', departure);
+		$.data($item[0], 'arrival', root.arrival);
 		
 		var loaded = 0;
 		var allLoad = new $.Event('allload');
@@ -272,12 +236,64 @@
 			sidebarSearcher.searcher.setDateTime(departure);
 			sidebarSearcher.searcher.checkForm();
 
-			$item.on("shown.bs.collapse", function() {
-				sidebarSearcher.searcher.directionsDisplay.setDirections(root);
-			});
+			$item.on("show.bs.collapse", renewMapDisplay.bind(it, root, departure, sidebarSearcher.searcher));
 
 			$item.prev(".panel-heading").trigger("click");
 		});
+
+		setInterval(function() {
+			var currentTime = new Date();
+			var passTime = $.data($item[0], "departure").getTime();
+			var arrival = $.data($item[0], "arrival");
+
+			if (arrival > currentTime && currentTime > passTime)
+				$item.closest('.panel').removeClass('panel-default panel-info').addClass('panel-primary');
+			else if (arrival <= currentTime)
+				$item.closest('.panel').removeClass('panel-primary panel-info').addClass('panel-default');
+			else
+				$item.closest('.panel').removeClass('panel-default panel-primary').addClass('panel-info');
+		}, 1000);
+	}
+
+	// function of Ittekiter
+	function renewMapDisplay(root, departure, searcher) {
+		searcher.directionsDisplay.setDirections(root);
+
+		var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(this, root, departure), 1000);
+
+		google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+			clearInterval(imadokoDisplay);
+		});
+	}
+
+	// function of Ittekiter
+	function imadokoDisplayFunc(root, departure) {
+		var passTime = departure.getTime();
+		var currentTime = new Date();
+		currentTime = currentTime.getTime();
+
+		if (root.arrival > currentTime && currentTime > passTime) {
+			for (var i = 0; i < root.routes.length; i++) {
+				for (var j = 0; j < root.routes[i].legs.length; j++) {
+					for (var k = 0; k < root.routes[i].legs[j].steps.length; k++) {
+						var step = root.routes[i].legs[j].steps[k];
+
+						// このstepに入ってからの経過時間
+						var passed = currentTime - passTime;
+						// このstepの長さ
+						var duration = step.duration.value * 1000;
+						passTime += duration;
+
+						if (passTime > currentTime) {
+							this.imakoko.setPosition(step.path[parseInt(step.path.length * (passed / duration))]);
+							passTime = departure;
+							return;
+						}
+
+					}
+				}
+			}
+		}
 	}
 
 	function SidebarRootSearcher(it, $item) {
@@ -295,6 +311,11 @@
 					title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
 				title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
 				$item.prev(".panel-heading").find(".panel-title").html(title);
+
+				$.data($item[0], 'departure', departure);
+				$.data($item[0], 'arrival', root.arrival);
+
+				it.renewMapDisplay(root, departure, searcher);
 			});
 		});
 		$item.find(".add_root").on("tap", function() {
@@ -526,14 +547,23 @@
 
 		rs.directionsService.route(request, function(result, status) {
 			if (status == google.maps.DirectionsStatus.OK) {
+				var arrival = departure * 1000;
+				for (var i = 0; i < result.routes.length; i++) {
+					for (var j = 0; j < result.routes[i].legs.length; j++) {
+						arrival += result.routes[i].legs[j].duration.value * 1000;
+					}
+				}
+
+				result.arrival = arrival;
+
 				var sendData = {
 					route_object: JSON.stringify(result),
 					departure: departure
 				};
+
 				$.post("/add", sendData, function(){
 					console.log('send success.');
 				}, "json", "json/application");
-				rs.directionsDisplay.setDirections(result);
 				callback.call(null, result, departure);
 			}
 		});
@@ -615,7 +645,7 @@
 				popup.content = content;
 			}
 		});
-}
+	}
 
 	/**
 	 * 地図上にクリックすると拡大するポップアップを表示(InfoWindow代替)
@@ -624,11 +654,11 @@
 	 * @param {google.maps.LatLng} latlng  吹き出しの出る座標
 	 * @param {String}             content 中身(縮小時)
 	 */
-	 function ExpandablePopup(map, latlng, content) {
-	 	this.setMap(map);
-	 	this.latlng = latlng;
-	 	this.content = content;
-	 }
+	function ExpandablePopup(map, latlng, content) {
+		this.setMap(map);
+		this.latlng = latlng;
+		this.content = content;
+	}
 
 	// Inheritance + Implementation
 	ExpandablePopup['prototype'] = new google.maps.OverlayView();
@@ -645,96 +675,96 @@
 	/**
 	 * google.maps.OvarlayView.onAdd()の実装
 	 */
-	 function expandablePopupOnAdd() {
-	 	var panes = this.getPanes();
-	 	this.$popover = $('<div class="expop popover top fade in show" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>');
-	 	$(panes.overlayMouseTarget).append(this.$popover);
-	 	this.initContent();
+	function expandablePopupOnAdd() {
+		var panes = this.getPanes();
+		this.$popover = $('<div class="expop popover top fade in show" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>');
+		$(panes.overlayMouseTarget).append(this.$popover);
+		this.initContent();
 
-	 	this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
-	 		e.stopPropagation();
-	 	});
-	 }
+		this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
+			e.stopPropagation();
+		});
+	}
 
 	/**
 	 * google.maps.OvarlayView.draw()の実装
 	 * 吹き出しの場所を修正
 	 */
-	 function expandablePopupDraw() {
-	 	this.point = this.getProjection().fromLatLngToDivPixel(this.latlng);
-	 	this.$popover.css({
-	 		left: this.point.x - this.width / 2,
-	 		top: this.point.y - this.height - 11
-	 	});
-	 }
+	function expandablePopupDraw() {
+		this.point = this.getProjection().fromLatLngToDivPixel(this.latlng);
+		this.$popover.css({
+			left: this.point.x - this.width / 2,
+			top: this.point.y - this.height - 11
+		});
+	}
 
 	/**
 	 * google.maps.OvarlayView.onRemove()の実装
 	 * expandablePopupOnAdd.setMap(null)で実行
 	 */
-	 function expandablePopupOnRemove() {
-	 	this.$popover.remove();
-	 }
+	function expandablePopupOnRemove() {
+		this.$popover.remove();
+	}
 
 	/**
 	 * 拡張時のサイズ設定
 	 * @param  {boolean} applicable 後から自分で適応する場合false
 	 */
-	 function modifyExpandedPopupSize(applicable) {
-	 	var m = $("#map");
-	 	var mw = m.width();
-	 	var mh = m.height();
+	function modifyExpandedPopupSize(applicable) {
+		var m = $("#map");
+		var mw = m.width();
+		var mh = m.height();
 
-	 	if (mw > 767) {
-	 		mw = 768;
-	 	}
+		if (mw > 767) {
+			mw = 768;
+		}
 
-	 	this.height = mh - 55 - 40 - 10;
-	 	this.width = mw - 40 - 10;
-	 	if (applicable)
-	 		this.applyModifiedExpandedPopUpSize();
+		this.height = mh - 55 - 40 - 10;
+		this.width = mw - 40 - 10;
+		if (applicable)
+			this.applyModifiedExpandedPopUpSize();
 
-	 	var prj = this.getProjection();
-	 	var pixel = prj.fromLatLngToDivPixel(this.latlng);
-	 	pixel.y -= this.height / 2;
-	 	this.map.panTo(prj.fromDivPixelToLatLng(pixel));
-	 }
+		var prj = this.getProjection();
+		var pixel = prj.fromLatLngToDivPixel(this.latlng);
+		pixel.y -= this.height / 2;
+		this.map.panTo(prj.fromDivPixelToLatLng(pixel));
+	}
 
 	/**
 	 * ポップアップのサイズ変更を適用
 	 */
-	 function applyModifiedExpandedPopUpSize() {
-	 	this.$popover.css({
-	 		width: this.width,
-	 		height: this.height
-	 	});
-	 	this.draw();
-	 }
+	function applyModifiedExpandedPopUpSize() {
+		this.$popover.css({
+			width: this.width,
+			height: this.height
+		});
+		this.draw();
+	}
 
 	/**
 	 * 縮小時の中身の設定
 	 * @param {String} content 中身
 	 */
-	 function initContent(content) {
-	 	if (content && typeof content !== "undefined")
-	 		this.content = content;
+	function initContent(content) {
+		if (content && typeof content !== "undefined")
+			this.content = content;
 
-	 	this.$popover.find('.popover-content').html(this.content);
-	 	this.width = this.$popover.outerWidth();
-	 	this.height = this.$popover.outerHeight();
-	 	this.$popover.css({
-	 		width: this.width,
-	 		height: this.height
-	 	});
+		this.$popover.find('.popover-content').html(this.content);
+		this.width = this.$popover.outerWidth();
+		this.height = this.$popover.outerHeight();
+		this.$popover.css({
+			width: this.width,
+			height: this.height
+		});
 
-	 	this.draw();
-	 }
+		this.draw();
+	}
 
 	/**
 	 * 非同期読み込みを実装してください
 	 * @return {String} 拡大後の中身
 	 */
-	 function loadContent() {
+	function loadContent() {
 		// 継承先かインスタンスで実装してください。
 		this.content = this.content;
 	}
@@ -784,36 +814,36 @@
 	 * @param  {Number} center  元の中心
 	 * @param  {String} content 元の中身
 	 */
-	 function contractExpandablePopup(width, height, center, content, resize) {
-	 	var popup = this
-	 	var $popover = popup.$popover;
-	 	var $popoverContent = $popover.find('.popover-content');
-	 	popup.width = width;
-	 	popup.height = height;
-	 	popup.content = content;
+	function contractExpandablePopup(width, height, center, content, resize) {
+		var popup = this
+		var $popover = popup.$popover;
+		var $popoverContent = $popover.find('.popover-content');
+		popup.width = width;
+		popup.height = height;
+		popup.content = content;
 
-	 	$popoverContent.transition({
-	 		opacity: 0
-	 	}, 'fast', function() {
-	 		popup.map.panTo(center);
-	 		$popover.css({
-	 			height: height,
-	 			width: width,
-	 			zIndex: "-=1"
-	 		}).removeClass('popup--expanded');
-	 		popup.draw();
-	 		$popoverContent.html(content).transition({
-	 			opacity: 1
-	 		}, 'fast');
-	 		$popover.one('tap', expandExpandablePopup.bind(popup));
-	 		popup.map.setOptions({
-	 			draggable: true,
-	 			scrollwheel: true
-	 		});
-	 	});
+		$popoverContent.transition({
+			opacity: 0
+		}, 'fast', function() {
+			popup.map.panTo(center);
+			$popover.css({
+				height: height,
+				width: width,
+				zIndex: "-=1"
+			}).removeClass('popup--expanded');
+			popup.draw();
+			$popoverContent.html(content).transition({
+				opacity: 1
+			}, 'fast');
+			$popover.one('tap', expandExpandablePopup.bind(popup));
+			popup.map.setOptions({
+				draggable: true,
+				scrollwheel: true
+			});
+		});
 
-	 	google.maps.event.removeListener(resize);
-	 }
+		google.maps.event.removeListener(resize);
+	}
 
 	// Exports
 	if ("process" in global) {
