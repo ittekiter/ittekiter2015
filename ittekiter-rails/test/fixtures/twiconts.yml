@@ -1,11 +1,13 @@
 # Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  twidt: 2015-07-12 18:54:22
+  twidt: 2015-07-27 20:16:28
   twict: MyString
   name: MyString
+  twiloc: MyString
 
 two:
-  twidt: 2015-07-12 18:54:22
+  twidt: 2015-07-27 20:16:28
   twict: MyString
   name: MyString
+  twiloc: MyString
