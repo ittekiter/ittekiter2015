@@ -178,80 +178,77 @@
 	 function addAlibi(id, root, departure) {
 	 	var placesService = new google.maps.places.PlacesService(this.map);
 	 	var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+id+'" aria-expanded="false" aria-controls="alibi-list-item'+id+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+id+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+id+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div> </form> </div> </div> </div>';
-	 	$(template).insertAfter('#alibi-list .panel:first');
+	 	
+	 	var $allitem = $("#alibi-list .alibi-collapse")
+	 	var i = 0;
+
+	 	if ($allitem.length > 1 && typeof $.data($allitem[1], "arrival") !== "undefined") {
+		 	while (i < $allitem.length - 1 && $.data($allitem[i + 1], "arrival") > root.arrival) {
+		 		i++;
+		 	}
+		}
+
+	 	$allitem.eq(i).closest(".panel").after(template);
+
 	 	var $item = $("#alibi-list-item"+id);
 
 	 	$.data($item[0], 'id', id);
 	 	$.data($item[0], 'departure', departure);
 	 	$.data($item[0], 'arrival', root.arrival);
-	 	
-	 	var loaded = 0;
-	 	var allLoad = new $.Event('allload');
-
-	 	function placeLoaded() {
-	 		loaded++;
-
-	 		if (loaded == root.request.waypoints.length + 2)
-	 			$item.trigger(allLoad);
-	 	}
 
 		// 場所情報をフォームにパース・
-		placesService.getDetails({placeId: root.request.origin.place_id}, function(result) {
-			var $pd = $item.find(".place-origin");
-			$pd.val(root.request.origin.value);
-			$.data($pd[0], "value", root.request.origin.value);
-			$.data($pd[0], "place", result);
-			$.data($pd[0], "searchEnable", true);
+		var $pd = $item.find(".place-origin");
+		$pd.val(root.request.origin.value);
 
-			placeLoaded();
-		});
+		root.request.origin.place.geometry.location = new google.maps.LatLng(root.request.origin.place.geometry.location.A, root.request.origin.place.geometry.location.F);
+
+		$.data($pd[0], "value", root.request.origin.value);
+		$.data($pd[0], "place", root.request.origin.place);
+		$.data($pd[0], "searchEnable", true);
 
 		$.each(root.request.waypoints, function(i, waypoint) {
 			var $fg = $item.find(".form-places-group:last");
 			var $pd = $fg.find(".place-destination");
 			$pd.val(waypoint.location.value);
-			placesService.getDetails({placeId: waypoint.location.place_id}, function(result) {
-				$.data($pd[0], "value", waypoint.location.value);
-				$.data($pd[0], "place", result);
-				$.data($pd[0], "searchEnable", true);
-				placeLoaded();
-			});
+
+			waypoint.location.place.geometry.location = new google.maps.LatLng(waypoint.location.place.geometry.location.A, waypoint.location.place.geometry.location.F);
+
+			$.data($pd[0], "value", waypoint.location.value);
+			$.data($pd[0], "place", waypoint.location.place);
+			$.data($pd[0], "searchEnable", true);
+
 			$fg.after('<div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">'+String.fromCharCode(i + 67)+'.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div>');
 		});
 
-		placesService.getDetails({placeId: root.request.destination.place_id}, function(result) {
-			var $fg = $item.find(".form-places-group:last");
-			var $pd = $fg.find(".place-destination");
-			$pd.val(root.request.destination.value);
-			$.data($pd[0], "value", root.request.destination.value);
-			$.data($pd[0], "place", result);
-			$.data($pd[0], "searchEnable", true);
+		var $fg = $item.find(".form-places-group:last");
+		var $pd = $fg.find(".place-destination");
+		$pd.val(root.request.destination.value);
 
-			var title = result.name;
-			if (root.request.waypoints.length > 0)
-				title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
-			title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
-			$item.prev(".panel-heading").find(".panel-title").html(title);
+		root.request.destination.place.geometry.location = new google.maps.LatLng(root.request.destination.place.geometry.location.A, root.request.destination.place.geometry.location.F);
 
-			placeLoaded();
+		$.data($pd[0], "value", root.request.destination.value);
+		$.data($pd[0], "place", root.request.destination.place);
+		$.data($pd[0], "searchEnable", true);
 
-			if (root.request.waypoints.length > 0)
-				$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
-		});
+		var title = root.request.destination.place.name;
+		if (root.request.waypoints.length > 0)
+			title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
+		title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
+		$item.prev(".panel-heading").find(".panel-title").html(title);
 
-		var it = this;
-		$item.one('allload', function() {
-			// SidebarRootSearcherのインスタンスを生成
-			var sidebarSearcher = new SidebarRootSearcher(it, $item);
-			// 日時をパース
-			sidebarSearcher.searcher.setDateTime(departure);
-			sidebarSearcher.searcher.checkForm();
+		if (root.request.waypoints.length > 0)
+			$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 
-			$item.on("show.bs.collapse", renewMapDisplay.bind(it, root, departure, sidebarSearcher.searcher));
+		// SidebarRootSearcherのインスタンスを生成
+		var sidebarSearcher = new SidebarRootSearcher(this, $item);
+		// 日時をパース
+		sidebarSearcher.searcher.setDateTime(departure);
+		sidebarSearcher.searcher.checkForm();
 
-			if ($("#base").hasClass('base--started'))
-				$item.prev(".panel-heading").trigger("click");
-		});
+		$item.on("show.bs.collapse", renewMapDisplay.bind(this, root, departure, sidebarSearcher.searcher));
+
+		if ($("#base").hasClass('base--started'))
+			$item.prev(".panel-heading").trigger("click");
 
 		setInterval(function() {
 			var currentTime = new Date();
@@ -314,13 +311,15 @@
 						if (passTime > currentTime) {
 							var index = parseInt(step.path.length * (passed / duration));
 							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
+							this.imakoko.setVisible(true);
 							passTime = departure;
 							return;
 						}
-
 					}
 				}
 			}
+		} else {
+			this.imakoko.setVisible(false);
 		}
 	}
 
@@ -568,6 +567,13 @@
 	 		var $dest = $(dests[i])
 	 		var place = $.data($dest[0], "place");
 	 		var location = place.geometry.location;
+	 		location.place = {
+	 			place_id: place.place_id,
+	 			name: place.name,
+	 			geometry: {
+	 				location: new google.maps.LatLng(place.geometry.location.A, place.geometry.location.F)
+	 			}
+	 		};
 	 		location.place_id = place.place_id;
 	 		location.value = $.data($dest[0], "value");
 	 		waypoints.push({
@@ -587,9 +593,21 @@
 	 		optimizeWaypoints: true,
 	 		travelMode: google.maps.TravelMode.DRIVING
 	 	};
-	 	request.origin.place_id = placeOrigin.place_id;
+	 	request.origin.place = {
+	 		place_id: placeOrigin.place_id,
+	 		name: placeOrigin.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
+	 		}
+	 	};
 	 	request.origin.value = $.data($placeOrigin[0], "value");
-	 	request.destination.place_id = placeDest.place_id;
+	 	request.destination.place = {
+	 		place_id: placeDest.place_id,
+	 		name: placeDest.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
+	 		}
+	 	};
 	 	request.destination.value = $.data($dest[0], "value");
 
 	 	var departure = new Date((parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60) * 1000);
