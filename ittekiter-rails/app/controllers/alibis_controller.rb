@@ -75,8 +75,7 @@ class AlibisController < ApplicationController
     render json: current_users_alibis
   end
   def update_alibi
-    #Alibi.where(["id = ?",params[:id]]).update(["departure = ?, route_object = ?", params[:departure], params[:route_object]])
-    Alibi.update(params[:id], dep_time: params[:departure], route_object: params[:route_object])
+    Alibi.update(params[:id],dep_time: params[:departure], route_object: params[:route_object])
     render nothing: true
   end
 
