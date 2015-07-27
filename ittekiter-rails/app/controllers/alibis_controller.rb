@@ -25,7 +25,6 @@ class AlibisController < ApplicationController
   # POST /alibis.json
   def create
     @alibi = Alibi.new(alibi_params)
-
     respond_to do |format|
       if @alibi.save
         format.html { redirect_to @alibi, notice: 'Alibi was successfully created.' }
