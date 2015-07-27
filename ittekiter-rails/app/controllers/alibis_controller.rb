@@ -63,8 +63,16 @@ class AlibisController < ApplicationController
 
   def add
     @alibi = Alibi.create(route_object: params[:route_object],dep_time: params[:departure],user_id: current_user.uid)
+    puts params[:departure]
     redirect_to root_url
   end
+
+  def get_alibis
+    puts current_user.uid
+    current_users_alibis = Alibi.where(user_id: current_user.uid)
+    render json: current_users_alibis
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_alibi
