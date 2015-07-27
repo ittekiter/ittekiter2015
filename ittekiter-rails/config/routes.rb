@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   post "/add" => "alibis#add"
   post "/make_suggestion" => "sessions#make_suggestion"
   get "/get_alibis" => "alibis#get_alibis"
+  get "/delete_alibi" => "alibis#delete_alibi"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 

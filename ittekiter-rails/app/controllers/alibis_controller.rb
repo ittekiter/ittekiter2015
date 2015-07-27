@@ -63,17 +63,17 @@ class AlibisController < ApplicationController
 
   def add
     @alibi = Alibi.create(route_object: params[:route_object],dep_time: params[:departure],user_id: current_user.uid)
-    render nothing: true
+    render text: @alibi.id
   end
 
   def delete_alibi
-    Alibi.where(id: params[:id]).delete
+    Alibi.where(id: params[:id]).destroy
     render nothing: true
   end
 
   def get_alibis
     puts current_user.uid
-    current_users_alibis = Alibi.where(user_id: current_user.uid).order(:dep_time)
+    current_users_alibis = Alibi.where(user_id: current_user.uid)
     render json: current_users_alibis
   end
 
