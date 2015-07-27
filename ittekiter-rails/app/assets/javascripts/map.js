@@ -50,12 +50,6 @@
 				set.apply(this, arguments);
 			}
 		})();
-		var it = this;
-		$.get("get_alibis",function(json) {
-		    for (var i = 0; i < json.length; i++) {
-				it.addAlibi(JSON.parse(json[i].route_object), new Date(Date.parse(json[i].dep_time)));
-		    }
-		});
 	};
 
 	/**
@@ -135,7 +129,11 @@
 			}, function() {
 				setTimeout(function() {
 					it.elements.$base.addClass('base--sidebaropened');
-					$(".panel-heading[href=#alibi-list-add]").trigger('click');
+					var $currentAlibi = $("#alibi-list .panel-primary, #alibi-list .panel-info").last();
+					if ($currentAlibi.length)
+						$currentAlibi.find(".panel-heading").trigger('click');
+					else
+						$(".panel-heading[href=#alibi-list-add]").trigger('click');
 					google.maps.event.trigger(it.map, "resize");
 				}, 400);
 				it.elements.$base.addClass('base--started');
@@ -162,6 +160,14 @@
 			google.maps.event.trigger(it.map, "resize");
 			it.map.setCenter(center); 
 		});
+
+
+		var it = this;
+		$.get("get_alibis",function(json) {
+		    for (var i = 0; i < json.length; i++) {
+				it.addAlibi(json[i].id, JSON.parse(json[i].route_object), new Date(Date.parse(json[i].dep_time)));
+		    }
+		});
 	};
 
 	/**
@@ -169,13 +175,13 @@
 	 * @param {google.maps.DirectionsResult} root      ルート
 	 * @param {Date}                         departure 出発日時
 	 */
-	 function addAlibi(root, departure) {
+	 function addAlibi(id, root, departure) {
 	 	var placesService = new google.maps.places.PlacesService(this.map);
-	 	var number = $(".alibi-list-item").length;
-	 	var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+number+'" aria-expanded="false" aria-controls="alibi-list-item'+number+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+number+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+number+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button> </form> </div> </div> </div>';
+	 	var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+id+'" aria-expanded="false" aria-controls="alibi-list-item'+id+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+id+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+id+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div> </form> </div> </div> </div>';
 	 	$(template).insertAfter('#alibi-list .panel:first');
-	 	var $item = $("#alibi-list-item"+number);
+	 	var $item = $("#alibi-list-item"+id);
 
+	 	$.data($item[0], 'id', id);
 	 	$.data($item[0], 'departure', departure);
 	 	$.data($item[0], 'arrival', root.arrival);
 	 	
@@ -243,7 +249,8 @@
 
 			$item.on("show.bs.collapse", renewMapDisplay.bind(it, root, departure, sidebarSearcher.searcher));
 
-			$item.prev(".panel-heading").trigger("click");
+			if ($("#base").hasClass('base--started'))
+				$item.prev(".panel-heading").trigger("click");
 		});
 
 		setInterval(function() {
@@ -262,6 +269,21 @@
 
 	// function of Ittekiter
 	function renewMapDisplay(root, departure, searcher) {
+		for (var i = 0; i < root.routes.length; i++) {
+			root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(root.routes[i].bounds.ya.A, root.routes[i].bounds.ra.j), new google.maps.LatLng(root.routes[i].bounds.ya.j, root.routes[i].bounds.ra.A));
+			for (var j = 0; j < root.routes[i].legs.length; j++) {
+				var leg = root.routes[i].legs[j];
+				root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.A, leg.start_location.F);
+				root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.A, leg.end_location.F);
+				for (var k = 0; k < root.routes[i].legs[j].steps.length; k++) {
+					for (var l = 0; l < root.routes[i].legs[j].steps[k].path.length; l++) {
+						var path = root.routes[i].legs[j].steps[k].path[l];
+						root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.A, path.F);
+					}
+				}
+			}
+		}
+
 		searcher.directionsDisplay.setDirections(root);
 
 		var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(this, root, departure), 1000);
@@ -290,7 +312,8 @@
 						passTime += duration;
 
 						if (passTime > currentTime) {
-							this.imakoko.setPosition(step.path[parseInt(step.path.length * (passed / duration))]);
+							var index = parseInt(step.path.length * (passed / duration));
+							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
 							passTime = departure;
 							return;
 						}
@@ -308,7 +331,7 @@
 		var searcher = this.searcher;
 		$item.find(".modify_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(function(root, departure) {
+			searcher.searchRoot(function(id, root, departure) {
 				var $destination = $item.find(".place-destination:last");
 				var title = $.data($destination[0], "place").name;
 				if (root.request.waypoints.length > 0)
@@ -322,6 +345,19 @@
 				it.renewMapDisplay(root, departure, searcher);
 			});
 		});
+		$item.find(".delete_alibi").on("tap", function() {
+			var $panel = $item.parent(".panel");
+			var $prev = $panel.prev(".panel");
+			var $next = $panel.next(".panel");
+
+			$.get("/delete_alibi", {id: $.data($item[0], 'id')}, function(){
+				$panel.remove();
+				if ($next.length)
+					$next.find(".panel-heading").trigger("click");
+				else
+					$prev.find(".panel-heading").trigger("click");
+			});
+		})
 		$item.find(".add_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
 			searcher.searchRoot(addAlibi.bind(it));
@@ -381,13 +417,22 @@
 
 		// picker.js + picker.date.js + picker.time.js + legacy.js
 		// (Styling) default.css + default.date.css + default.time.css
-		var pickerOptions = {
+		var dateOption = {
 			container: '#picker_container',
-			clear: ''
+			clear: '',
+			min: new Date(),
+			format: 'yyyy年m月d日'
 		}
+
+		var timeOption = {
+			container: '#picker_container',
+			clear: '',
+			format: 'HH:i'
+		}
+
 		// スタート画面のフォーム
-		var placeDay = $form.find(".place-day").pickadate(pickerOptions);
-		var placeTime = $form.find(".place-time").pickatime(pickerOptions);
+		var placeDay = $form.find(".place-day").pickadate(dateOption);
+		var placeTime = $form.find(".place-time").pickatime(timeOption);
 		this.dayPicker = placeDay.pickadate('picker');
 		this.timePicker = placeTime.pickatime('picker');
 		$form.find(".place-day").on("change", changeDateTime.bind(this, 'date', this.dayPicker));
@@ -565,11 +610,9 @@
 	 				departure: departure
 	 			};
 
-	 			$.post("/add", sendData, function(){
-	 				console.log('send success.');
-	 			}, "json", "json/application");
-	 			callback.call(null, result, departure);
-
+	 			$.post("/add", sendData, function(id){
+	 				callback.call(null, id, result, departure);
+	 			});
 	 		}
 	 	});
 
@@ -623,23 +666,15 @@
 
 	 			/*瑛彦が書いた*/
 	 			/* flickrのやつ　まだふわふわしてる*/	 			
-                /*
-                var sendOption = {
+                /*var sendOption = {
                 	method: "flickr.photos.search",
                 	api_key: "f51d23964bce3d29afd14807431a3dd4",
-                	text: "筑波大学"//details.name,
-                	format: "json"
+                	text: details.name
                 }
                 var reponse = new Object();
                 $.post("https://api.flickr.com/services/rest",sendOption,function(reponse){
                 	console.log(response);
-                });
-                for(var i = 0; i < response.photos.total && i < 10;i++){
-                	var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
-	                content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
-                }
-
-                */
+                });*/
                 /*瑛彦が書いた*/
 
 	 			if (details.photos) {
