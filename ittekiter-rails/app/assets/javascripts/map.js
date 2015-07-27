@@ -54,7 +54,6 @@
 		$.get("get_alibis",function(json) {
 		    for (var i = 0; i < json.length; i++) {
 				it.addAlibi(JSON.parse(json[i].route_object), new Date(Date.parse(json[i].dep_time)));
-				console.log(JSON.parse(json[i].route_object));
 		    }
 		});
 	};
@@ -621,6 +620,19 @@
 	 			content += '<div class="_scroll">'
 	 			content += '<h3>' + details.name + '</h3>';
 
+	 			/*瑛彦が書いた*/
+	 			/* flickrのやつ　まだふわふわしてる*/	 			
+                /*var sendOption = {
+                	method: "flickr.photos.search",
+                	api_key: "f51d23964bce3d29afd14807431a3dd4",
+                	text: details.name
+                }
+                var reponse = new Object();
+                $.post("https://api.flickr.com/services/rest",sendOption,function(reponse){
+                	console.log(response);
+                });*/
+                /*瑛彦が書いた*/
+
 	 			if (details.photos) {
 	 				content += '<div class="popup__photocontainer">';
 	 				for (var i = 0; i < details.photos.length && i < 6; i++) {
@@ -646,6 +658,7 @@
 	 			var sendText = {
 	 				content: reviewTexts
 	 			}
+	 			console.log(reviewTexts.content);
 	 			var suggested_text;
 	 			$.post("make_suggestion",sendText,function(data){
 	 			})
