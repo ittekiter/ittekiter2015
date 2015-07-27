@@ -257,19 +257,6 @@
 
 		if ($("#base").hasClass('base--started'))
 			$item.prev(".panel-heading").trigger("click");
-
-		setInterval(function() {
-			var currentTime = new Date();
-			var passTime = $.data($item[0], "departure").getTime();
-			var arrival = $.data($item[0], "arrival");
-
-			if (arrival > currentTime && currentTime > passTime)
-				$item.closest('.panel').removeClass('panel-default panel-info').addClass('panel-primary');
-			else if (arrival <= currentTime)
-				$item.closest('.panel').removeClass('panel-primary panel-info').addClass('panel-default');
-			else
-				$item.closest('.panel').removeClass('panel-default panel-primary').addClass('panel-info');
-		}, 1000);
 	}
 
 	// function of Ittekiter
@@ -335,6 +322,22 @@
 		// イベントの設定
 		this.searcher = new RootSearcher(it.map, $item.find("form"));
 
+		var panelColorManager = "";
+		if (!$item.is('#alibi-list-add')) {
+			panelColorManager = setInterval(function() {
+				var currentTime = new Date();
+				var passTime = $.data($item[0], "departure").getTime();
+				var arrival = $.data($item[0], "arrival");
+
+				if (arrival > currentTime && currentTime > passTime)
+					$item.closest('.panel').removeClass('panel-default panel-info').addClass('panel-primary');
+				else if (arrival <= currentTime)
+					$item.closest('.panel').removeClass('panel-primary panel-info').addClass('panel-default');
+				else
+					$item.closest('.panel').removeClass('panel-default panel-primary').addClass('panel-info');
+			}, 1000);
+		}
+
 		var searcher = this.searcher;
 		$item.find(".modify_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
@@ -348,6 +351,17 @@
 
 				$.data($item[0], 'departure', departure);
 				$.data($item[0], 'arrival', result.arrival);
+
+			 	var $allitem = $("#alibi-list .alibi-collapse")
+			 	var i = 0;
+
+			 	if ($allitem.length > 1 && typeof $.data($allitem[1], "arrival") !== "undefined") {
+				 	while (i < $allitem.length - 1 && ($.data($allitem[i + 1], "arrival") > result.arrival || $($allitem[i + 1]).attr("id") === $item.attr("id"))) {
+				 		i++;
+				 	}
+				}
+
+			 	$allitem.eq(i).closest(".panel").after($item.closest(".panel"));
 
 				it.renewMapDisplay(result, departure, searcher);
 
@@ -368,6 +382,9 @@
 
 			$.get("/delete_alibi", {id: $.data($item[0], 'id')}, function(){
 				$panel.remove();
+
+				clearInterval(panelColorManager);
+
 				if ($next.length)
 					$next.find(".panel-heading").trigger("click");
 				else
