@@ -50,13 +50,6 @@
 				set.apply(this, arguments);
 			}
 		})();
-		var it = this;
-		$.get("get_alibis",function(json) {
-		    for (var i = 0; i < json.length; i++) {
-				it.addAlibi(JSON.parse(json[i].route_object), new Date(Date.parse(json[i].dep_time)));
-				console.log(JSON.parse(json[i].route_object));
-		    }
-		});
 	};
 
 	/**
@@ -136,7 +129,11 @@
 			}, function() {
 				setTimeout(function() {
 					it.elements.$base.addClass('base--sidebaropened');
-					$(".panel-heading[href=#alibi-list-add]").trigger('click');
+					var $currentAlibi = $("#alibi-list .panel-primary, #alibi-list .panel-info").last();
+					if ($currentAlibi.length)
+						$currentAlibi.find(".panel-heading").trigger('click');
+					else
+						$(".panel-heading[href=#alibi-list-add]").trigger('click');
 					google.maps.event.trigger(it.map, "resize");
 				}, 400);
 				it.elements.$base.addClass('base--started');
@@ -162,6 +159,14 @@
 			var center = it.map.getCenter();
 			google.maps.event.trigger(it.map, "resize");
 			it.map.setCenter(center); 
+		});
+
+
+		var it = this;
+		$.get("get_alibis",function(json) {
+		    for (var i = 0; i < json.length; i++) {
+				it.addAlibi(JSON.parse(json[i].route_object), new Date(Date.parse(json[i].dep_time)));
+		    }
 		});
 	};
 
@@ -244,7 +249,8 @@
 
 			$item.on("show.bs.collapse", renewMapDisplay.bind(it, root, departure, sidebarSearcher.searcher));
 
-			$item.prev(".panel-heading").trigger("click");
+			if ($("#base").hasClass('base--started'))
+				$item.prev(".panel-heading").trigger("click");
 		});
 
 		setInterval(function() {
@@ -263,6 +269,21 @@
 
 	// function of Ittekiter
 	function renewMapDisplay(root, departure, searcher) {
+		for (var i = 0; i < root.routes.length; i++) {
+			root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(root.routes[i].bounds.ya.A, root.routes[i].bounds.ra.j), new google.maps.LatLng(root.routes[i].bounds.ya.j, root.routes[i].bounds.ra.A));
+			for (var j = 0; j < root.routes[i].legs.length; j++) {
+				var leg = root.routes[i].legs[j];
+				root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.A, leg.start_location.F);
+				root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.A, leg.end_location.F);
+				for (var k = 0; k < root.routes[i].legs[j].steps.length; k++) {
+					for (var l = 0; l < root.routes[i].legs[j].steps[k].path.length; l++) {
+						var path = root.routes[i].legs[j].steps[k].path[l];
+						root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.A, path.F);
+					}
+				}
+			}
+		}
+
 		searcher.directionsDisplay.setDirections(root);
 
 		var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(this, root, departure), 1000);
@@ -291,7 +312,8 @@
 						passTime += duration;
 
 						if (passTime > currentTime) {
-							this.imakoko.setPosition(step.path[parseInt(step.path.length * (passed / duration))]);
+							var index = parseInt(step.path.length * (passed / duration));
+							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
 							passTime = departure;
 							return;
 						}
