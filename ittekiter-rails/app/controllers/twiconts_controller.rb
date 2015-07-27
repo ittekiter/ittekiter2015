@@ -14,7 +14,7 @@ class TwicontsController < ApplicationController
 	end
 
 	def update_tweet
-		Twicont.where(["id = ?",params[:id]]).update(twidt: params[:tweet_date], twict: params[:twicont])
+		Twicont.update(params[:id], twidt: params[:tweet_date], twict: params[:twicont])
 		render nothing: true		
 	end
 end

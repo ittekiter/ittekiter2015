@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   post "/make_suggestion" => "sessions#make_suggestion"
   get "/get_alibis" => "alibis#get_alibis"
   get "/delete_alibi" => "alibis#delete_alibi"
+  post "/update_alibi" => "alibis#update_alibi"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 

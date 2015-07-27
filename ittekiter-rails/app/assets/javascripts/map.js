@@ -104,7 +104,15 @@
 				opacity: 0
 			}, function() {
 				setTimeout(function() {
-					it.rootSearcher.searchRoot(addAlibi.bind(it));
+					it.rootSearcher.searchRoot(function(result, departure) {
+			 			var data = {
+			 				route_object: JSON.stringify(result),
+			 				departure: departure
+			 			};
+						$.post("/add", data, function(id){
+							it.addAlibi(id, result, departure)
+			 			});
+					});
 					google.maps.event.trigger(it.map, "resize");
 				}, 400);
 				it.elements.$base.addClass('base--started');
@@ -330,18 +338,27 @@
 		var searcher = this.searcher;
 		$item.find(".modify_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(function(id, root, departure) {
+			searcher.searchRoot(function(result, departure) {
 				var $destination = $item.find(".place-destination:last");
 				var title = $.data($destination[0], "place").name;
-				if (root.request.waypoints.length > 0)
-					title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
+				if (result.request.waypoints.length > 0)
+					title += '&nbsp;<small style="white-space: nowrap;">など'+(result.request.waypoints.length + 1)+'ヶ所</small>';
 				title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
 				$item.prev(".panel-heading").find(".panel-title").html(title);
 
 				$.data($item[0], 'departure', departure);
-				$.data($item[0], 'arrival', root.arrival);
+				$.data($item[0], 'arrival', result.arrival);
 
-				it.renewMapDisplay(root, departure, searcher);
+				it.renewMapDisplay(result, departure, searcher);
+
+				var data = {
+					id: $.data($item[0], 'id'),
+					route_object: JSON.stringify(result),
+					departure: departure
+				}
+
+				$.post("/update_alibi", data, function(){
+				});
 			});
 		});
 		$item.find(".delete_alibi").on("tap", function() {
@@ -359,7 +376,15 @@
 		})
 		$item.find(".add_root").on("tap", function() {
 			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(addAlibi.bind(it));
+			searcher.searchRoot(function(result, departure) {
+	 			var data = {
+	 				route_object: JSON.stringify(result),
+	 				departure: departure
+	 			};
+				$.post("/add", data, function(id){
+					it.addAlibi(id, result, departure)
+	 			});
+			});
 
 			$item.one('hidden.bs.collapse', clearForm.bind(searcher));
 		});
@@ -623,14 +648,7 @@
 
 	 			result.arrival = arrival;
 
-	 			var sendData = {
-	 				route_object: JSON.stringify(result),
-	 				departure: departure
-	 			};
-
-	 			$.post("/add", sendData, function(id){
-	 				callback.call(null, id, result, departure);
-	 			});
+	 			callback.call(null, result, departure);
 	 		}
 	 	});
 
