@@ -320,7 +320,7 @@
 				searcher.directionsDisplay.setMap(it.map);
 			});
 
-			$item.find(".modify_root").on("tap", function() {
+			function modifyRoot() {
 				$("#base").removeClass('base--sidebaropened');
 				searcher.searchRoot(function(result, departure) {
 					var $destination = $item.find(".place-destination:last");
@@ -337,6 +337,17 @@
 					item.departure = departure;
 
 					item.renewMapDisplay();
+					$item.find(".modify_root").on("tap", modifyRoot);
+
+					var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(item), 1000);
+					google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+						item.clearPop();
+						clearInterval(imadokoDisplay);
+						item.imakoko.setVisible(false);
+						$item.find(".modify_root").off("tap");
+						$item.find(".delete_alibi").off("tap");
+						searcher.directionsDisplay.setMap(it.map);
+					});
 
 				 	var $allitem = $("#alibi-list .alibi-collapse");
 				 	var i = 0;
@@ -360,7 +371,9 @@
 						item.makePop();
 					});
 				});
-			});
+			}
+
+			$item.find(".modify_root").on("tap", modifyRoot);
 			$item.find(".delete_alibi").on("tap", function() {
 				var $panel = $item.parent(".panel");
 				var $prev = $panel.prev(".panel");
@@ -824,7 +837,7 @@
 	                			maxHeight: details.photos[i].height,
 	                			maxWidth: details.photos[i].width
 	                		}
-	                		content += '<div class="popup__photowrapper" onClick="event.stopPropagation();"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
+	                		content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
 	                	}
 	                	content += '</div>';
 	                }*/
@@ -907,13 +920,23 @@
 	 */
 	 function expandablePopupOnAdd() {
 	 	var panes = this.getPanes();
+	 	
 	 	this.$popover = $('<div class="expop popover top fade in show" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>');
-	 	$(panes.overlayMouseTarget).append(this.$popover);
+	 	$(panes.floatPane).append(this.$popover);
 	 	this.initContent();
 
 	 	this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
 	 		e.stopPropagation();
 	 	});
+
+	 	this.$popover.on({
+	 		tap: function() {
+	 			$(this).trigger("focus");
+	 		},
+	 		doubletap: function() {
+	 			$(this).trigger("select");
+	 		}
+	 	}, "textarea, input");
 	 }
 
 	/**
@@ -1012,7 +1035,7 @@
 		popup.modifyExpandedPopupSize(false);
 
 		popup.map.setOptions({
-			//draggable: false,
+			draggable: false,
 			scrollwheel: false
 		});
 
