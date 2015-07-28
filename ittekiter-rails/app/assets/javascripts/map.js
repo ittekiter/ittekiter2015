@@ -16,8 +16,6 @@
  	Ittekiter["prototype"]["setSize"] = setSize;
  	Ittekiter["prototype"]["setEvent"] = setEvent;
  	Ittekiter["prototype"]["addAlibi"] = addAlibi;
- 	Ittekiter["prototype"]["renewMapDisplay"] = renewMapDisplay;
- 	Ittekiter["prototype"]["imadokoDisplayFunc"] = imadokoDisplayFunc;
  	
 	/**
 	 * マップの初期化
@@ -33,10 +31,6 @@
 
 	 	this.map = new google.maps.Map(document.getElementById("map"), opts);
 	 	this.rootSearcher = new RootSearcher(this.map, $("#overlay__form__content__inner"));
-	 	this.sidebarSearcher = new SidebarRootSearcher(this, $("#alibi-list-add"));
-	 	this.imakoko = new google.maps.Marker({
-	 		map: this.map
-	 	});
 
 		// POIのポップアップを無効化
 		(function fixInfoWindow() {
@@ -169,6 +163,23 @@
 			it.map.setCenter(center); 
 		});
 
+		var $item = $("#alibi-list-add")
+	 	var sidebarSearcher = new SidebarRootSearcher(this, $item);
+
+		$item.find(".add_root").on("tap", function() {
+			$("#base").removeClass('base--sidebaropened');
+			sidebarSearcher.searcher.searchRoot(function(result, departure) {
+	 			var data = {
+	 				route_object: JSON.stringify(result),
+	 				departure: departure
+	 			};
+				$.post("/add", data, function(id){
+					it.addAlibi(id, result, departure)
+	 			});
+			});
+
+			$item.one('hidden.bs.collapse', clearForm.bind(sidebarSearcher.searcher));
+		});
 
 		var it = this;
 		$.get("get_alibis",function(json) {
@@ -185,9 +196,15 @@
 	 */
 	 function addAlibi(id, root, departure) {
 	 	var placesService = new google.maps.places.PlacesService(this.map);
-	 	var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+id+'" aria-expanded="false" aria-controls="alibi-list-item'+id+'"> <h4 class="panel-title"></h4> </div> <div id="alibi-list-item'+id+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+id+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div> </form> </div> </div> </div>';
+	 	var title = (function () {
+	 		var title = root.request.destination.place.name;
+			if (root.request.waypoints.length > 0)
+				title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
+			return title+'<br><small style="white-space: nowrap;">'+departure.getFullYear()+'年'+(departure.getMonth() + 1)+'月'+departure.getDate()+'日 '+("0"+departure.getHours()).slice(-2)+':'+("0"+departure.getMinutes()).slice(-2)+'</small>';
+	 	})();
+	 	var template = '<div class="panel panel-default alibi-list-item"> <div class="panel-heading collapsed" role="button" data-toggle="collapse" data-parent="#alibi-list" href="#alibi-list-item'+id+'" aria-expanded="false" aria-controls="alibi-list-item'+id+'"> <h4 class="panel-title">'+title+'</h4> </div> <div id="alibi-list-item'+id+'" class="panel-collapse collapse alibi-collapse" role="tabpanel" aria-labelledby="headingAlibiListItem'+id+'"> <div class="panel-body"> <form> <div class="form-group"> <label>出発地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">A.</span> </span> <input role="button" class="form-places place-origin" type="text" placeholder="どこから？"> </div> </div> <div class="form-group" style="margin-bottom: 0;"> <label>目的地</label> <div class="form-places-group"> <span class="form-places-addon"> <span class="form-places-addon-inner">B.</span> </span> <input role="button" class="form-places place-destination" type="text" placeholder="どこいく？"> </div> <div class="clearfix"> <span role="button" class="form-places-button form-places-add"><i class="glyphicon glyphicon-plus-sign"></i>&nbsp;目的地を追加</span> </div> </div> <div class="form-group"> <label>日時</label> <div class="clearfix"> <input role="button" class="form-places form-places-date place-day" type="text" placeholder="いついく？"> <input role="button" class="form-places form-places-date place-time" type="text" placeholder="時間"> </div> </div> <div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button type="button" class="btn btn-primary btn-block search_root modify_root" disabled>再検索</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div> </form> </div> </div> </div>';
 	 	
-	 	var $allitem = $("#alibi-list .alibi-collapse")
+	 	var $allitem = $("#alibi-list .alibi-collapse");
 	 	var i = 0;
 
 	 	if ($allitem.length > 1 && typeof $.data($allitem[1], "arrival") !== "undefined") {
@@ -238,64 +255,143 @@
 		$.data($pd[0], "place", root.request.destination.place);
 		$.data($pd[0], "searchEnable", true);
 
-		var title = root.request.destination.place.name;
-		if (root.request.waypoints.length > 0)
-			title += '&nbsp;<small style="white-space: nowrap;">など'+(root.request.waypoints.length + 1)+'ヶ所</small>';
-		title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
-		$item.prev(".panel-heading").find(".panel-title").html(title);
-
 		if (root.request.waypoints.length > 0)
 			$fg.append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 
 		// SidebarRootSearcherのインスタンスを生成
-		var sidebarSearcher = new SidebarRootSearcher(this, $item);
-		// 日時をパース
-		sidebarSearcher.searcher.setDateTime(departure);
-		sidebarSearcher.searcher.checkForm();
-
-		$item.on("show.bs.collapse", renewMapDisplay.bind(this, root, departure, sidebarSearcher.searcher));
+		var sidebarSearcher = new SidebarItem(this, $item, root, departure);
 
 		if ($("#base").hasClass('base--started'))
 			$item.prev(".panel-heading").trigger("click");
 	}
 
-	// function of Ittekiter
-	function renewMapDisplay(root, departure, searcher) {
-		for (var i = 0; i < root.routes.length; i++) {
-			root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(root.routes[i].bounds.ya.A, root.routes[i].bounds.ra.j), new google.maps.LatLng(root.routes[i].bounds.ya.j, root.routes[i].bounds.ra.A));
-			for (var j = 0; j < root.routes[i].legs.length; j++) {
-				var leg = root.routes[i].legs[j];
-				root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.A, leg.start_location.F);
-				root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.A, leg.end_location.F);
-				for (var k = 0; k < root.routes[i].legs[j].steps.length; k++) {
-					for (var l = 0; l < root.routes[i].legs[j].steps[k].path.length; l++) {
-						var path = root.routes[i].legs[j].steps[k].path[l];
-						root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.A, path.F);
+	/**
+	 * アリバイのパネル云々のクラス
+	 * @param {Ittekiter}                    it        Ittekiterのインスタンス
+	 * @param {jQuery Object}                $item     .panel-collapseの要素
+	 * @param {google.maps.DirectionsResult} root      ルートオブジェクト
+	 * @param {Date}                         departure 出発時間
+	 */
+	function SidebarItem(it, $item ,root, departure) {
+		var sidebarSearcher = new SidebarRootSearcher(it, $item);
+		var searcher = sidebarSearcher.searcher;
+
+		this.searcher = searcher;
+
+		var item = this;
+
+		this.root = root;
+		this.departure = departure;
+
+		// 日時をパース
+		searcher.setDateTime(departure);
+		searcher.checkForm();
+
+	 	this.imakoko = new google.maps.Marker({
+	 		map: it.map,
+	 		visible: false
+	 	});
+
+		var panelColorManager = setInterval(function() {
+			var currentTime = new Date();
+			var passTime = $.data($item[0], "departure").getTime();
+			var arrival = $.data($item[0], "arrival");
+
+			if (arrival > currentTime && currentTime > passTime)
+				$item.closest('.panel').removeClass('panel-default panel-info').addClass('panel-primary');
+			else if (arrival <= currentTime)
+				$item.closest('.panel').removeClass('panel-primary panel-info').addClass('panel-default');
+			else
+				$item.closest('.panel').removeClass('panel-default panel-primary').addClass('panel-info');
+		}, 1000);
+
+		$item.on("show.bs.collapse", function() {
+			var imadokoDisplay = item.renewMapDisplay();
+
+			// 別なアリバイを開いた時
+			google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+				clearInterval(imadokoDisplay);
+				item.imakoko.setVisible(false);
+				$item.find(".modify_root").off("tap");
+				$item.find(".delete_alibi").off("tap");
+				searcher.directionsDisplay.setMap(it.map);
+			});
+
+			$item.find(".modify_root").on("tap", function() {
+				$("#base").removeClass('base--sidebaropened');
+				searcher.searchRoot(function(result, departure) {
+					var $destination = $item.find(".place-destination:last");
+					var title = $.data($destination[0], "place").name;
+					if (result.request.waypoints.length > 0)
+						title += '&nbsp;<small style="white-space: nowrap;">など'+(result.request.waypoints.length + 1)+'ヶ所</small>';
+					title += '<br><small style="white-space: nowrap;">'+departure.getFullYear()+'年'+(departure.getMonth() + 1)+'月'+departure.getDate()+'日 '+("0"+departure.getHours()).slice(-2)+':'+("0"+departure.getMinutes()).slice(-2)+'</small>';
+					$item.prev(".panel-heading").find(".panel-title").html(title);
+
+					$.data($item[0], 'departure', departure);
+					$.data($item[0], 'arrival', result.arrival);
+
+					item.root = result;
+					item.departure = departure;
+
+				 	var $allitem = $("#alibi-list .alibi-collapse");
+				 	var i = 0;
+
+				 	if ($allitem.length > 1 && typeof $.data($allitem[1], "arrival") !== "undefined") {
+					 	while (i < $allitem.length - 1 && ($.data($allitem[i + 1], "arrival") > result.arrival || $($allitem[i + 1]).attr("id") === $item.attr("id"))) {
+					 		i++;
+					 	}
 					}
-				}
-			}
-		}
 
-		searcher.directionsDisplay.setDirections(root);
+				 	$allitem.eq(i).closest(".panel").after($item.closest(".panel"));
 
-		var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(this, root, departure), 1000);
+					var data = {
+						id: $.data($item[0], 'id'),
+						route_object: JSON.stringify(result),
+						departure: departure
+					}
 
-		google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
-			clearInterval(imadokoDisplay);
+					$.post("/update_alibi", data, function(){
+					});
+				});
+			});
+			$item.find(".delete_alibi").on("tap", function() {
+				var $panel = $item.parent(".panel");
+				var $prev = $panel.prev(".panel");
+				var $next = $panel.next(".panel");
+
+				$.get("/delete_alibi", {id: $.data($item[0], 'id')}, function(){
+					$panel.remove();
+
+					clearInterval(imadokoDisplay);
+					clearInterval(panelColorManager);
+					searcher.directionsDisplay.setMap(null);
+					item.imakoko.setMap(null);
+
+					if ($next.length)
+						$next.find(".panel-heading").trigger("click");
+					else
+						$prev.find(".panel-heading").trigger("click");
+				});
+			});
 		});
 	}
 
-	// function of Ittekiter
-	function imadokoDisplayFunc(root, departure) {
-		var passTime = departure.getTime();
+ 	SidebarItem["prototype"]["imadokoDisplayFunc"] = imadokoDisplayFunc;
+ 	SidebarItem["prototype"]["renewMapDisplay"] = renewMapDisplay;
+
+ 	/**
+ 	 * いまどこのマーカーを移動させるやつ
+ 	 */
+	function imadokoDisplayFunc() {
+		var passTime = this.departure.getTime();
 		var currentTime = new Date();
 		currentTime = currentTime.getTime();
 
-		if (root.arrival > currentTime && currentTime > passTime) {
-			for (var i = 0; i < root.routes.length; i++) {
-				for (var j = 0; j < root.routes[i].legs.length; j++) {
-					for (var k = 0; k < root.routes[i].legs[j].steps.length; k++) {
-						var step = root.routes[i].legs[j].steps[k];
+		if (this.root.arrival > currentTime && currentTime > passTime) {
+			for (var i = 0; i < this.root.routes.length; i++) {
+				for (var j = 0; j < this.root.routes[i].legs.length; j++) {
+					for (var k = 0; k < this.root.routes[i].legs[j].steps.length; k++) {
+						var step = this.root.routes[i].legs[j].steps[k];
 
 						// このstepに入ってからの経過時間
 						var passed = currentTime - passTime;
@@ -307,7 +403,8 @@
 							var index = parseInt(step.path.length * (passed / duration));
 							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
 							this.imakoko.setVisible(true);
-							passTime = departure;
+							console.log("imadoko")
+							passTime = this.departure;
 							return;
 						}
 					}
@@ -318,93 +415,42 @@
 		}
 	}
 
+	/**
+	 * 表示時・再検索に使う
+	 * @return {event} clearIntervalに使うやつ
+	 */
+	function renewMapDisplay() {
+		for (var i = 0; i < this.root.routes.length; i++) {
+			this.root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(this.root.routes[i].bounds.ya.A, this.root.routes[i].bounds.ra.j), new google.maps.LatLng(this.root.routes[i].bounds.ya.j, this.root.routes[i].bounds.ra.A));
+			for (var j = 0; j < this.root.routes[i].legs.length; j++) {
+				var leg = this.root.routes[i].legs[j];
+				this.root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.A, leg.start_location.F);
+				this.root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.A, leg.end_location.F);
+				for (var k = 0; k < this.root.routes[i].legs[j].steps.length; k++) {
+					for (var l = 0; l < this.root.routes[i].legs[j].steps[k].path.length; l++) {
+						var path = this.root.routes[i].legs[j].steps[k].path[l];
+						this.root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.A, path.F);
+					}
+				}
+			}
+		}
+
+		this.imakoko.setVisible(true);
+		this.searcher.directionsDisplay.setDirections(this.root);
+
+		return setInterval(imadokoDisplayFunc.bind(this), 1000);
+	}
+
+	/**
+	 * サイドバー用の検索クラス
+	 * @param {Ittekiter}     it    Ittekiterのインスタンス
+	 * @param {jQuery Object} $item .panel-collapseの要素
+	 */
 	function SidebarRootSearcher(it, $item) {
 		// イベントの設定
 		this.searcher = new RootSearcher(it.map, $item.find("form"));
 
-		var panelColorManager = "";
-		if (!$item.is('#alibi-list-add')) {
-			panelColorManager = setInterval(function() {
-				var currentTime = new Date();
-				var passTime = $.data($item[0], "departure").getTime();
-				var arrival = $.data($item[0], "arrival");
-
-				if (arrival > currentTime && currentTime > passTime)
-					$item.closest('.panel').removeClass('panel-default panel-info').addClass('panel-primary');
-				else if (arrival <= currentTime)
-					$item.closest('.panel').removeClass('panel-primary panel-info').addClass('panel-default');
-				else
-					$item.closest('.panel').removeClass('panel-default panel-primary').addClass('panel-info');
-			}, 1000);
-		}
-
 		var searcher = this.searcher;
-		$item.find(".modify_root").on("tap", function() {
-			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(function(result, departure) {
-				var $destination = $item.find(".place-destination:last");
-				var title = $.data($destination[0], "place").name;
-				if (result.request.waypoints.length > 0)
-					title += '&nbsp;<small style="white-space: nowrap;">など'+(result.request.waypoints.length + 1)+'ヶ所</small>';
-				title += '<br><small style="white-space: nowrap;">'+departure.toString()+'</small>';
-				$item.prev(".panel-heading").find(".panel-title").html(title);
-
-				$.data($item[0], 'departure', departure);
-				$.data($item[0], 'arrival', result.arrival);
-
-			 	var $allitem = $("#alibi-list .alibi-collapse")
-			 	var i = 0;
-
-			 	if ($allitem.length > 1 && typeof $.data($allitem[1], "arrival") !== "undefined") {
-				 	while (i < $allitem.length - 1 && ($.data($allitem[i + 1], "arrival") > result.arrival || $($allitem[i + 1]).attr("id") === $item.attr("id"))) {
-				 		i++;
-				 	}
-				}
-
-			 	$allitem.eq(i).closest(".panel").after($item.closest(".panel"));
-
-				it.renewMapDisplay(result, departure, searcher);
-
-				var data = {
-					id: $.data($item[0], 'id'),
-					route_object: JSON.stringify(result),
-					departure: departure
-				}
-
-				$.post("/update_alibi", data, function(){
-				});
-			});
-		});
-		$item.find(".delete_alibi").on("tap", function() {
-			var $panel = $item.parent(".panel");
-			var $prev = $panel.prev(".panel");
-			var $next = $panel.next(".panel");
-
-			$.get("/delete_alibi", {id: $.data($item[0], 'id')}, function(){
-				$panel.remove();
-
-				clearInterval(panelColorManager);
-
-				if ($next.length)
-					$next.find(".panel-heading").trigger("click");
-				else
-					$prev.find(".panel-heading").trigger("click");
-			});
-		})
-		$item.find(".add_root").on("tap", function() {
-			$("#base").removeClass('base--sidebaropened');
-			searcher.searchRoot(function(result, departure) {
-	 			var data = {
-	 				route_object: JSON.stringify(result),
-	 				departure: departure
-	 			};
-				$.post("/add", data, function(id){
-					it.addAlibi(id, result, departure)
-	 			});
-			});
-
-			$item.one('hidden.bs.collapse', clearForm.bind(searcher));
-		});
 		$item.find(".form-places-add").on('tap', function() {
 			var $formGroup = $(this).closest(".form-group");
 			var length = $formGroup.find(".form-places-group").length;
@@ -418,6 +464,7 @@
 			var $this = $(this);
 			var $formGroup = $this.closest(".form-group");
 			$this.closest(".form-places-group").remove();
+			searcher.checkForm();
 			if ($formGroup.find(".form-places-group").length > 1)
 				$formGroup.find(".form-places-group:last").append('<span role="button" class="badge form-places-remove"><i class="glyphicon glyphicon-remove"></i></span>');
 		});
@@ -441,8 +488,8 @@
 			time: null
 		};
 
-		this.map = map;
-		this.directionsDisplay.setMap(map);
+		this.map = map
+		this.directionsDisplay.setMap(this.map);
 
 		this.$form = $form;
 		this.$search_root = $form.find(".search_root:not(.abs_disable)");
