@@ -320,7 +320,7 @@
 				searcher.directionsDisplay.setMap(it.map);
 			});
 
-			$item.find(".modify_root").on("tap", function() {
+			function modifyRoot() {
 				$("#base").removeClass('base--sidebaropened');
 				searcher.searchRoot(function(result, departure) {
 					var $destination = $item.find(".place-destination:last");
@@ -332,11 +332,13 @@
 
 					$.data($item[0], 'departure', departure);
 					$.data($item[0], 'arrival', result.arrival);
+					console.log("tap")
 
 					item.root = result;
 					item.departure = departure;
 
 					item.renewMapDisplay();
+					$item.find(".modify_root").on("tap", modifyRoot);
 
 				 	var $allitem = $("#alibi-list .alibi-collapse");
 				 	var i = 0;
@@ -360,7 +362,9 @@
 						item.makePop();
 					});
 				});
-			});
+			}
+
+			$item.find(".modify_root").on("tap", modifyRoot);
 			$item.find(".delete_alibi").on("tap", function() {
 				var $panel = $item.parent(".panel");
 				var $prev = $panel.prev(".panel");
