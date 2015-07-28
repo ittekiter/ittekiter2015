@@ -332,13 +332,22 @@
 
 					$.data($item[0], 'departure', departure);
 					$.data($item[0], 'arrival', result.arrival);
-					console.log("tap")
 
 					item.root = result;
 					item.departure = departure;
 
 					item.renewMapDisplay();
 					$item.find(".modify_root").on("tap", modifyRoot);
+
+					var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(item), 1000);
+					google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+						item.clearPop();
+						clearInterval(imadokoDisplay);
+						item.imakoko.setVisible(false);
+						$item.find(".modify_root").off("tap");
+						$item.find(".delete_alibi").off("tap");
+						searcher.directionsDisplay.setMap(it.map);
+					});
 
 				 	var $allitem = $("#alibi-list .alibi-collapse");
 				 	var i = 0;
