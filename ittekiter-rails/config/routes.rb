@@ -10,6 +10,11 @@ Rails.application.routes.draw do
   get "/logout" => "sessions#destroy", :as => :logout
   root 'alibis#index'
   post "/add" => "alibis#add"
+  post "/make_suggestion" => "sessions#make_suggestion"
+  get "/get_alibis" => "alibis#get_alibis"
+  get "/delete_alibi" => "alibis#delete_alibi"
+  post "/update_alibi" => "alibis#update_alibi"
+  post "/add_tweet" => "twiconts#add_tweet"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 

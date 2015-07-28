@@ -25,7 +25,6 @@ class AlibisController < ApplicationController
   # POST /alibis.json
   def create
     @alibi = Alibi.new(alibi_params)
-
     respond_to do |format|
       if @alibi.save
         format.html { redirect_to @alibi, notice: 'Alibi was successfully created.' }
@@ -63,8 +62,23 @@ class AlibisController < ApplicationController
 
   def add
     @alibi = Alibi.create(route_object: params[:route_object],dep_time: params[:departure],user_id: current_user.uid)
-    redirect_to root_url
+    render text: @alibi.id
   end
+
+  def delete_alibi
+    Alibi.delete(["id = ?",params[:id]])
+    render nothing: true
+  end
+
+  def get_alibis
+    current_users_alibis = Alibi.where(user_id: current_user.uid)
+    render json: current_users_alibis
+  end
+  def update_alibi
+    Alibi.update(params[:id],dep_time: params[:departure], route_object: params[:route_object])
+    render nothing: true
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_alibi
