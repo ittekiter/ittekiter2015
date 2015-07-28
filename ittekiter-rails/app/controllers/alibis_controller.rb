@@ -1,5 +1,6 @@
 class AlibisController < ApplicationController
   before_action :set_alibi, only: [:show, :edit, :update, :destroy]
+  protect_from_forgery except: :add
 
   # GET /alibis
   # GET /alibis.json
@@ -76,6 +77,7 @@ class AlibisController < ApplicationController
   end
   def update_alibi
     Alibi.update(params[:id],dep_time: params[:departure], route_object: params[:route_object])
+    Twicont.delete_all(["alibi_id = ?",params[:id]])
     render nothing: true
   end
 

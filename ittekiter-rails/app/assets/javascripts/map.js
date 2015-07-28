@@ -320,7 +320,7 @@
 				searcher.directionsDisplay.setMap(it.map);
 			});
 
-			$item.find(".modify_root").on("tap", function() {
+			function modifyRoot() {
 				$("#base").removeClass('base--sidebaropened');
 				searcher.searchRoot(function(result, departure) {
 					var $destination = $item.find(".place-destination:last");
@@ -337,6 +337,17 @@
 					item.departure = departure;
 
 					item.renewMapDisplay();
+					$item.find(".modify_root").on("tap", modifyRoot);
+
+					var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(item), 1000);
+					google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+						item.clearPop();
+						clearInterval(imadokoDisplay);
+						item.imakoko.setVisible(false);
+						$item.find(".modify_root").off("tap");
+						$item.find(".delete_alibi").off("tap");
+						searcher.directionsDisplay.setMap(it.map);
+					});
 
 				 	var $allitem = $("#alibi-list .alibi-collapse");
 				 	var i = 0;
@@ -360,7 +371,9 @@
 						item.makePop();
 					});
 				});
-			});
+			}
+
+			$item.find(".modify_root").on("tap", modifyRoot);
 			$item.find(".delete_alibi").on("tap", function() {
 				var $panel = $item.parent(".panel");
 				var $prev = $panel.prev(".panel");
@@ -484,6 +497,7 @@
 						results_len.push(results.length);
 					for (var s = 0; s < results.length && s < 3; s++) {
 						item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
+
 						if(results[s].duration =="undefined"){results[s].duration=0;}
 						twitimeset(results_len,item.popups,results[s],res.routes[0].legs,item.departure);
 					//	console.log(item.popups);console.log(results[s]);
@@ -763,50 +777,49 @@
 	 	}
 
 	 	var $placeOrigin = $(dests[0]);
-		 	var placeOrigin = $.data($placeOrigin[0], "place");
-		 	var $dest = $(dests[dests.length - 1]);
-		 	var placeDest = $.data($dest[0], "place");
-		 	var request = {
-		 		origin: placeOrigin.geometry.location,
-		 		destination: placeDest.geometry.location,
-		 		waypoints: waypoints,
-		 		optimizeWaypoints: true,
-		 		travelMode: google.maps.TravelMode.DRIVING
-		 	};
-		 	request.origin.place = {
-		 		place_id: placeOrigin.place_id,
-		 		name: placeOrigin.name,
-		 		geometry: {
-		 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
-		 		}
-		 	};
-		 	request.origin.value = $.data($placeOrigin[0], "value");
-		 	request.destination.place = {
-		 		place_id: placeDest.place_id,
-		 		name: placeDest.name,
-		 		geometry: {
-		 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
-		 		}
-		 	};
-		 	request.destination.value = $.data($dest[0], "value");
+	 	var placeOrigin = $.data($placeOrigin[0], "place");
+	 	var $dest = $(dests[dests.length - 1]);
+	 	var placeDest = $.data($dest[0], "place");
+	 	var request = {
+	 		origin: placeOrigin.geometry.location,
+	 		destination: placeDest.geometry.location,
+	 		waypoints: waypoints,
+	 		optimizeWaypoints: true,
+	 		travelMode: google.maps.TravelMode.DRIVING
+	 	};
+	 	request.origin.place = {
+	 		place_id: placeOrigin.place_id,
+	 		name: placeOrigin.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
+	 		}
+	 	};
+	 	request.origin.value = $.data($placeOrigin[0], "value");
+	 	request.destination.place = {
+	 		place_id: placeDest.place_id,
+	 		name: placeDest.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
+	 		}
+	 	};
+	 	request.destination.value = $.data($dest[0], "value");
 
-		 	var departure = new Date((parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60) * 1000);
+	 	var departure = new Date((parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60) * 1000);
 
-		 	rs.directionsService.route(request, function(result, status) {
-		 		if (status == google.maps.DirectionsStatus.OK) {
-		 			var arrival = departure.getTime();
-		 			for (var i = 0; i < result.routes.length; i++) {
-		 				for (var j = 0; j < result.routes[i].legs.length; j++) {
-		 					arrival += result.routes[i].legs[j].duration.value * 1000;
-		 				}
-		 			}
-		 			result.arrival = arrival;
-					callback.call(null, result, departure);
-	            }
-	        });
-		}
+	 	rs.directionsService.route(request, function(result, status) {
+	 		if (status == google.maps.DirectionsStatus.OK) {
+	 			var arrival = departure.getTime();
+	 			for (var i = 0; i < result.routes.length; i++) {
+	 				for (var j = 0; j < result.routes[i].legs.length; j++) {
+	 					arrival += result.routes[i].legs[j].duration.value * 1000;
+	 				}
+	 			}
+	 			result.arrival = arrival;
+	 			callback.call(null, result, departure);
+	 		}
+	 	});
+	 }
 
-	
 			/**
 		 * 与えられたPlaceのポップアップ用の情報を取得
 		 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
@@ -825,31 +838,32 @@
 		 	//		content += '<div class="_scroll">'
 		 			content += '<h3>' + details.name + '</h3>';
 		 			console.log(details);
-		 			/* flickrのやつ　だいぶかっちりしてるはず*/	 			
-	                /*
+
 		 			var response;
 		 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
-		 				console.log(response);
 		 			})
 		 			.done(function(response){
+		 				content += '<div class="popup__photocontainer">';
 		 				for(var i = 0; i < response.photos.total && i < 10;i++){
-		 					var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
+		 					var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
 		 					content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
-		 			});   
-		 			*/           
+		 				}
+		 				content += '</div>';
+		 			});
+		 			          
 	                /*瑛彦が書いた*/
 
-	                if (details.photos) {
+	                /*if (details.photos) {
 	                	content += '<div class="popup__photocontainer">';
 	                	for (var i = 0; i < details.photos.length && i < 6; i++) {
 	                		var opt = {
 	                			maxHeight: details.photos[i].height,
 	                			maxWidth: details.photos[i].width
 	                		}
-	                		content += '<div class="popup__photowrapper" onClick="event.stopPropagation();"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
+	                		content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
 	                	}
 	                	content += '</div>';
-	                }
+	                }*/
 
 	                if (details.reviews) {
 	                	var reviewTexts = "";
@@ -881,10 +895,8 @@
 						popup.content = content;
 						popup.$popover.one("tap", "#tweetbut", function(){
 							var t =document.getElementById('nobuki').value;
-							console.log("sen:");
+							var sendData ={ali: alibi,tim: time,text: t,location: JSON.stringify(place.geometry.location)};
 
-							var sendData ={ali: alibi,tim: time,text: t,location: place.geometry.location};
-							console.log(sendData);
 							$.post("/add_tweet",sendData);
 						});
 	      
@@ -933,13 +945,23 @@
 	 */
 	 function expandablePopupOnAdd() {
 	 	var panes = this.getPanes();
+	 	
 	 	this.$popover = $('<div class="expop popover top fade in show" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>');
-	 	$(panes.overlayMouseTarget).append(this.$popover);
+	 	$(panes.floatPane).append(this.$popover);
 	 	this.initContent();
 
 	 	this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
 	 		e.stopPropagation();
 	 	});
+
+	 	this.$popover.on({
+	 		tap: function() {
+	 			$(this).trigger("focus");
+	 		},
+	 		doubletap: function() {
+	 			$(this).trigger("select");
+	 		}
+	 	}, "textarea, input");
 	 }
 
 	/**
@@ -1038,7 +1060,7 @@
 		popup.modifyExpandedPopupSize(false);
 
 		popup.map.setOptions({
-			//draggable: false,
+			draggable: false,
 			scrollwheel: false
 		});
 
