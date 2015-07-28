@@ -803,7 +803,7 @@ console.log(request);
 	                			maxHeight: details.photos[i].height,
 	                			maxWidth: details.photos[i].width
 	                		}
-	                		content += '<div class="popup__photowrapper" onClick="event.stopPropagation();"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
+	                		content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
 	                	}
 	                	content += '</div>';
 	                }
@@ -836,9 +836,10 @@ console.log(request);
 
 						popup.content = content;
 						popup.$popover.one("tap", "#tweetbut", function(){
-							var t =document.getElementById('nobuki').value;
-							var sendData ={ali: alibi,tim: time,text: t};
-							$.post("/add_tweet",sendData);
+							// var t =document.getElementById('nobuki').value;
+							// var sendData ={ali: alibi,tim: time,text: t};
+							// $.post("/add_tweet",sendData);
+							console.log('EV')
 						});
 	      
 		 			});						// ._scroll
@@ -886,13 +887,23 @@ console.log(request);
 	 */
 	 function expandablePopupOnAdd() {
 	 	var panes = this.getPanes();
+	 	
 	 	this.$popover = $('<div class="expop popover top fade in show" role="tooltip"><div class="arrow"></div><div class="popover-content"></div></div>');
-	 	$(panes.overlayMouseTarget).append(this.$popover);
+	 	$(panes.floatPane).append(this.$popover);
 	 	this.initContent();
 
 	 	this.$popover.one('tap', expandExpandablePopup.bind(this)).on('tap', function(e) {
 	 		e.stopPropagation();
 	 	});
+
+	 	this.$popover.on({
+	 		tap: function() {
+	 			$(this).trigger("focus");
+	 		},
+	 		doubletap: function() {
+	 			$(this).trigger("select");
+	 		}
+	 	}, "textarea, input");
 	 }
 
 	/**
@@ -991,7 +1002,7 @@ console.log(request);
 		popup.modifyExpandedPopupSize(false);
 
 		popup.map.setOptions({
-			//draggable: false,
+			draggable: false,
 			scrollwheel: false
 		});
 
