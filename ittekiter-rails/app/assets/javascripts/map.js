@@ -424,13 +424,14 @@
 
 						if (passTime > currentTime) {
 							var index = parseInt(step.path.length * (passed / duration));
+							if (index < 0) index = 0;
 							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
 							this.imakoko.setVisible(true);
-							console.log("imadoko")
 							passTime = this.departure;
 							return;
 						}
 					}
+					passTime += 3600000;
 				}
 			}
 		} else {
@@ -787,6 +788,7 @@
 	 				for (var j = 0; j < result.routes[i].legs.length; j++) {
 	 					arrival += result.routes[i].legs[j].duration.value * 1000;
 	 				}
+	 				arrival += 3600000 * (result.routes[i].legs.length - 1);
 	 			}
 	 			result.arrival = arrival;
 	 			callback.call(null, result, departure);
