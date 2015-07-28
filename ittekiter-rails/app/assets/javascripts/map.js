@@ -858,7 +858,7 @@
 						popup.content = content;
 						popup.$popover.one("tap", "#tweetbut", function(){
 							var t =document.getElementById('nobuki').value;
-							var sendData ={ali: alibi,tim: time,text: t,location: place.geometry.location};
+							var sendData ={ali: alibi,tim: time,text: t,location: JSON.stringify(place.geometry.location)};
 							$.post("/add_tweet",sendData);
 						});
 	      
