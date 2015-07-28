@@ -494,17 +494,20 @@
 				}
 			});
 		}
-	}/*
+	}
 	function twitimeset(result,results_len){
 		var res = result.routes[0].legs;
-		var point_num=[];
+		var point_num=[];//そのポイントが所属しているルートの番号
 		for(var i=0;i<res.length;i++){
 			if(results_len[i]<3){
-				point_num[i]=result_
+				point_num[i]=result_len;
+			}else if(3<=results_len[i])
+			{
+				point_num[]
 			}
 		}
 	}
-*/
+
 
 	/**
 	 * サイドバー用の検索クラス
