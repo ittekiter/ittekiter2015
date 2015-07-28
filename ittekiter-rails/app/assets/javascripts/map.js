@@ -718,49 +718,48 @@
 	        });
 		}
 
-			function nobukiPop(res)
-			{
-				var rs = this;
-				var leg_len = res.routes[0].legs.length;
-				rs.placesService = new google.maps.places.PlacesService(rs.map);
-				
-				var request = new Array(leg_len);
+		function nobukiPop(res)
+		{
+			var rs = this;
+			var leg_len = res.routes[0].legs.length;
+			rs.placesService = new google.maps.places.PlacesService(rs.map);
+			
+			var request = new Array(leg_len);
 
-				if (typeof rs.popups != "undefined" && rs.popups.length > 0) {
-					for (var t = 0; t < rs.popups.length; t++) {
-				 		rs.popups[t].setMap(null);
-				 	}
+			if (typeof rs.popups != "undefined" && rs.popups.length > 0) {
+				for (var t = 0; t < rs.popups.length; t++) {
+					rs.popups[t].setMap(null);
 				}
-				rs.popups = [];		
-		console.log(res);
+			}
+			rs.popups = [];		
+			console.log(res);
 
-				for(var i = 0;i<leg_len;i++){
-					request[i]={
-						location: res.routes[0].legs[i].end_location,
-				 		radius: '50',
-				 		types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
-				 	};
-				}//i
-console.log(request);
+			for(var i = 0;i<leg_len;i++){
+				request[i]={
+					location: res.routes[0].legs[i].end_location,
+					radius: '50',
+					types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
+				};
+			}
+			console.log(request);
 
-				for(i=0;i<leg_len;i++){
-	//				reques(request[i],rs);  
-					rs.placesService.nearbySearch(request[i], function (results, status) {
-	console.log(status);
-				 	if (status == google.maps.places.PlacesServiceStatus.OK) {
-				 			for (var s = 0; s < results.length && s < 3; s++) {
-				 				rs.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
-				 				rs.popups[rs.popups.length - 1].loadContent = loadPlacesContent.bind(rs.popups[rs.popups.length - 1], results[s]);
-				 			}
-				 		}
-					});
-
+			for(i=0;i<leg_len;i++){ 
+				rs.placesService.nearbySearch(request[i], function (results, status) {
+					console.log(status);
+					if (status == google.maps.places.PlacesServiceStatus.OK) {
+						for (var s = 0; s < results.length && s < 3; s++) {
+							rs.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
+							rs.popups[rs.popups.length - 1].loadContent = loadPlacesContent.bind(rs.popups[rs.popups.length - 1], results[s]);
+						}
 					}
-			}
-			function reques(request,rs)
-			{
+				});
 
 			}
+		}
+		function reques(request,rs)
+		{
+
+		}
 			/**
 		 * 与えられたPlaceのポップアップ用の情報を取得
 		 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
@@ -781,22 +780,23 @@ console.log(request);
 		 			content += '<h3>' + details.name + '</h3>';
 		 			console.log(details);
 		 			console.log(place);
-		 			/*瑛彦が書いた*/
-		 			/* flickrのやつ　だいぶかっちりしてるはず*/	 			
-	                /*
+		 			/*瑛彦が書いた*/			
+	                
 		 			var response;
 		 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
-		 				console.log(response);
 		 			})
 		 			.done(function(response){
+		 				content += '<div class="popup__photocontainer">';
 		 				for(var i = 0; i < response.photos.total && i < 10;i++){
-		 					var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
+		 					var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
 		 					content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
-		 			});   
-		 			*/           
+		 				}
+		 				content += '</div>';
+		 			});
+		 			          
 	                /*瑛彦が書いた*/
 
-	                if (details.photos) {
+	                /*if (details.photos) {
 	                	content += '<div class="popup__photocontainer">';
 	                	for (var i = 0; i < details.photos.length && i < 6; i++) {
 	                		var opt = {
@@ -806,7 +806,7 @@ console.log(request);
 	                		content += '<div class="popup__photowrapper" onClick="event.stopPropagation();"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
 	                	}
 	                	content += '</div>';
-	                }
+	                }*/
 
 	                if (details.reviews) {
 	                	var reviewTexts = "";

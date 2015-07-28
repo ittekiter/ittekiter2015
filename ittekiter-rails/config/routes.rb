@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :twiconts
   resources :alibis
   resources :tests
 
