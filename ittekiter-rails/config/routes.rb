@@ -14,7 +14,9 @@ Rails.application.routes.draw do
   get "/get_alibis" => "alibis#get_alibis"
   get "/delete_alibi" => "alibis#delete_alibi"
   post "/update_alibi" => "alibis#update_alibi"
-  # Example of regular route:
+  post "/add_tweet" => "twiconts#add_tweet"
+  
+   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
   # Example of named route that can be invoked with purchase_url(id: product.id)

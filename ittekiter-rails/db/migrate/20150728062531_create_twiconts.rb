@@ -3,8 +3,9 @@ class CreateTwiconts < ActiveRecord::Migration
     create_table :twiconts do |t|
       t.datetime :twidt
       t.string :twict
-      t.string :name
       t.string :twiloc
+      t.integer :alibi_id
+      t.string :user_id
 
       t.timestamps null: false
     end

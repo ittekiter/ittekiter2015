@@ -20,21 +20,36 @@ class SessionsController < ApplicationController
     mresult = Array.new
     nresult = yp.parse(sentence,{results: 'uniq',responses:'baseform',filter:'9'},:POST)
     mresult = yp.parse(sentence,{results: 'uniq',responses:'baseform',filter:'1'},:POST)
+    vresult = yp.parse(sentence,{results: 'uniq',responses:'baseform',filter:'10'},:POST)
     noun = ""
     mod = ""
-    max = nresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i   
-    nresult["ResultSet"]["uniq_result"]["word_list"]["word"].each do |word|
-      if max <= word["count"].to_i then  
-        noun = word["surface"]
+    verb = ""
+    if nresult["ResultSet"]["uniq_result"]["word_list"]["word"].length != 0 then
+      max = nresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i   
+      nresult["ResultSet"]["uniq_result"]["word_list"]["word"].each do |word|
+        if max <= word["count"].to_i then  
+          noun = word["surface"]
+        end
       end
     end
-    max = mresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i
-    mresult["ResultSet"]["uniq_result"]["word_list"]["word"].each do |word|
-      if max <= word["count"].to_i then  
-        mod = word["surface"]
+    if mresult["ResultSet"]["uniq_result"]["word_list"]["word"].length != 0 then
+      max = mresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i
+      mresult["ResultSet"]["uniq_result"]["word_list"]["word"].each do |word|
+        if max <= word["count"].to_i then  
+          mod = word["surface"]
+        end
       end
     end
-    res_text = noun + "が" + mod
+    if vresult["ResultSet"]["uniq_result"]["word_list"]["word"].length != 0 then
+      max = vresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i
+      vresult["ResultSet"]["uniq_result"]["word_list"]["word"].each do |word|
+        if max <= word["count"].to_i then  
+          verb = word["surface"]
+        end
+      end
+    end
+    #res_text = noun + "が" + mod
+    res_text = noun + verb
     render text: res_text
   end
 

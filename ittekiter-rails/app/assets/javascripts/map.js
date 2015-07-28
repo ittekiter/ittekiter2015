@@ -649,29 +649,7 @@
 	 			result.arrival = arrival;
 
 	 			callback.call(null, result, departure);
-	 			var request = {
-	 				location: placeDest.geometry.location,
-	 				radius: '2000',
-	 				types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
-	 			};
 
-	 			if (typeof rs.popups !== "undefined" && rs.popups.length > 0) {
-	 				for (var i = 0; i < rs.popups.length; i++) {
-	 					rs.popups[i].setMap(null);
-	 				}
-	 			}
-
-	 			rs.popups = [];
-
-	 			rs.placesService = new google.maps.places.PlacesService(rs.map);
-	 			rs.placesService.nearbySearch(request, function (results, status) {
-	 				if (status == google.maps.places.PlacesServiceStatus.OK) {
-	 					for (var i = 0; i < results.length && i < 5; i++) {
-	 						rs.popups[i] = new ExpandablePopup(rs.map, results[i].geometry.location, results[i].name);
-	 						rs.popups[i].loadContent = loadPlacesContent.bind(rs.popups[i], results[i]);
-	 					}
-	 				}
-	 			});
             }
         });
 
@@ -727,11 +705,11 @@
 	 			/* flickrのやつ　だいぶかっちりしてるはず*/	 			
                 /*
 	 			var response;
-	 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
+	 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true&lon="+details.geometory.loaction.lng+"&lat="+details.geometory.location.lat+"&radius=5",function(response){
 	 				console.log(response);
 	 			})
 	 			.done(function(response){
-	 				for(var i = 0; i < response.photos.total && i < 10;i++){
+	 				for(var i = 0; i < response.photos.total && i < 6;i++){
 	 					var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
 	 					content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
 	 				}
@@ -761,10 +739,12 @@
                 		content += '<p>' + details.reviews[i].text + '</p>';
                 	}
                 }
+
                 var sendText = {
                 	content: reviewTexts
                 }
                 console.log(reviewTexts.content);
+                
                 var suggested_text;
                 $.post("make_suggestion",sendText,function(data){
                 })
