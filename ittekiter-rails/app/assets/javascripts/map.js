@@ -723,7 +723,7 @@
 				var rs = this;
 				var leg_len = res.routes[0].legs.length;
 				rs.placesService = new google.maps.places.PlacesService(rs.map);
-				rs.directionsDisplay.setDirections(res);
+				
 				var request = new Array(leg_len);
 
 				if (typeof rs.popups != "undefined" && rs.popups.length > 0) {
