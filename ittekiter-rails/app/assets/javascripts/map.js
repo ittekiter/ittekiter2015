@@ -475,6 +475,7 @@
 
 			};
 		}
+		console.log(res);
 		var results_len=[];
 		for(i=0;i<leg_len;i++){ 
 			rs.placesService.nearbySearch(request[i], function (results, status) {
@@ -483,9 +484,10 @@
 						results_len.push(results.length);
 					for (var s = 0; s < results.length && s < 3; s++) {
 						item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
-						console.log(results_len);
-						twitimeset(result,results_len);
-						item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s],res,results_len);
+						if(results[s].duration =="undefined"){results[s].duration=0;}
+						twitimeset(results_len,item.popups,results[s],res.routes[0].legs,item.departure);
+					//	console.log(item.popups);console.log(results[s]);
+						item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s]);
 					}
 				}
 				else
@@ -495,15 +497,35 @@
 			});
 		}
 	}
-	function twitimeset(result,results_len){
-		var res = result.routes[0].legs;
-		var point_num=[];//そのポイントが所属しているルートの番号
-		for(var i=0;i<res.length;i++){
+	function twitimeset(results_len,popups,point,res,dep){
+		var nearby_num=[];
+		var route_time=[];//そのルートにかかる時間
+		var point_time=[];
+		var pre_time=0;
+		var now = dep.getTime();
+		for(var i=0;i<results_len.length;i++){
 			if(results_len[i]<3){
-				point_num[i]=result_len;
+				nearby_num[i]=results_len[i];
 			}else if(3<=results_len[i])
 			{
-				point_num[]
+				nearby_num[i]=3;
+			}
+			route_time[i]=res[i].duration.value;
+//			if(points[i].name == point.name)
+		}
+		var s=0;
+
+		for(var t=0;t<nearby_num.length;t++){
+			for(s=0;s<nearby_num[t];s++){
+				point_time.push(((pre_time+route_time[t])*1000+now));
+			}
+			pre_time+=route_time[t]+3600;
+		}
+		for(t=0;t<popups.length;t++){
+			popups[t].duration = point_time[t];
+	//		point_time[t]= new Date(point_time[t]);
+			if(point.name==popups[t].content){
+				point.duration=popups[t].duration;
 			}
 		}
 	}
@@ -785,22 +807,18 @@
 		}
 
 	
-			function reques(request,rs)
-			{
-
-			}
 			/**
 		 * 与えられたPlaceのポップアップ用の情報を取得
 		 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
 		 */
-		 function loadPlacesContent(place,result,results_len) {
+		 function loadPlacesContent(place,result) {
 		 	var popup = this;
-		 	console.log(results_len);
 		 	var request = {
 		 		placeId: place.place_id
 		 	};
 		 	var placesService = new google.maps.places.PlacesService(popup.map);
-
+		 	console.log(result);
+		 	console.log(place);
 		 	var content = '';
 		 	placesService.getDetails(request, function(details, status) {
 		 		if (status == google.maps.places.PlacesServiceStatus.OK) {
@@ -850,11 +868,12 @@
 	                	console.log(data);
 	                })	
 	               .done(function(data){
-	               		var time = "2015-07-27:22:34:29";
+	               		var time = new Date(place.duration);
+	               		console.log(time);
 						var alibi = $(".alibi-collapse.in");
 
 						alibi = $.data(alibi[0], "id");
-		               	content += '<div class="form-group"><input id="tweet_time" class="form-control" type="text" placeholder='+time+' disabled></input><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
+		               	content += '<div class="form-group"><form id="tweet_time" class="form-control" type="text" placeholder='+time+' disabled></form><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
 						content += '</div>';
 						var doc= $(".tweetbut");
 
@@ -862,7 +881,10 @@
 						popup.content = content;
 						popup.$popover.one("tap", "#tweetbut", function(){
 							var t =document.getElementById('nobuki').value;
+							console.log("sen:");
+
 							var sendData ={ali: alibi,tim: time,text: t,location: place.geometry.location};
+							console.log(sendData);
 							$.post("/add_tweet",sendData);
 						});
 	      
