@@ -306,10 +306,13 @@
 		}, 1000);
 
 		$item.on("show.bs.collapse", function() {
-			var imadokoDisplay = item.renewMapDisplay();
+			item.renewMapDisplay();
+			var imadokoDisplay = setInterval(imadokoDisplayFunc.bind(item), 1000);
+			item.makePop();
 
 			// 別なアリバイを開いた時
 			google.maps.event.addListenerOnce(searcher.directionsDisplay, "directions_changed", function() {
+				item.clearPop();
 				clearInterval(imadokoDisplay);
 				item.imakoko.setVisible(false);
 				$item.find(".modify_root").off("tap");
@@ -333,6 +336,8 @@
 					item.root = result;
 					item.departure = departure;
 
+					item.renewMapDisplay();
+
 				 	var $allitem = $("#alibi-list .alibi-collapse");
 				 	var i = 0;
 
@@ -351,6 +356,8 @@
 					}
 
 					$.post("/update_alibi", data, function(){
+						item.clearPop();
+						item.makePop();
 					});
 				});
 			});
@@ -361,6 +368,7 @@
 
 				$.get("/delete_alibi", {id: $.data($item[0], 'id')}, function(){
 					$panel.remove();
+					item.clearPop();
 
 					clearInterval(imadokoDisplay);
 					clearInterval(panelColorManager);
@@ -378,6 +386,8 @@
 
  	SidebarItem["prototype"]["imadokoDisplayFunc"] = imadokoDisplayFunc;
  	SidebarItem["prototype"]["renewMapDisplay"] = renewMapDisplay;
+ 	SidebarItem["prototype"]["makePop"] = makePop;
+ 	SidebarItem["prototype"]["clearPop"] = clearPop;
 
  	/**
  	 * いまどこのマーカーを移動させるやつ
@@ -417,7 +427,6 @@
 
 	/**
 	 * 表示時・再検索に使う
-	 * @return {event} clearIntervalに使うやつ
 	 */
 	function renewMapDisplay() {
 		for (var i = 0; i < this.root.routes.length; i++) {
@@ -437,9 +446,65 @@
 
 		this.imakoko.setVisible(true);
 		this.searcher.directionsDisplay.setDirections(this.root);
-
-		return setInterval(imadokoDisplayFunc.bind(this), 1000);
 	}
+	function clearPop()
+	{
+
+		for (var t = 0; t < this.popups.length; t++) {
+			this.popups[t].setMap(null);
+		}
+	}
+
+	function makePop()
+	{
+		var res =this.root;
+		var rs = this.searcher;
+		var leg_len = res.routes[0].legs.length;
+		rs.placesService = new google.maps.places.PlacesService(rs.map);
+
+		var request = new Array(leg_len);
+
+		this.popups = [];
+		var item =this;
+
+		for(var i = 0;i<leg_len;i++){
+			request[i]={
+				location: res.routes[0].legs[i].end_location,
+				radius: '50',
+				types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
+
+			};
+		}
+		var results_len=[];
+		for(i=0;i<leg_len;i++){ 
+			rs.placesService.nearbySearch(request[i], function (results, status) {
+				console.log(status);
+				if (status == google.maps.places.PlacesServiceStatus.OK) {
+						results_len.push(results.length);
+					for (var s = 0; s < results.length && s < 3; s++) {
+						item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
+						console.log(results_len);
+			//			twitimeset(result,results_len);
+						item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s],res,results_len);
+					}
+				}
+				else
+				{
+					results_len.push(0);
+				}
+			});
+		}
+	}/*
+	function twitimeset(result,results_len){
+		var res = result.routes[0].legs;
+		var point_num=[];
+		for(var i=0;i<res.length;i++){
+			if(results_len[i]<3){
+				point_num[i]=result_
+			}
+		}
+	}
+*/
 
 	/**
 	 * サイドバー用の検索クラス
@@ -538,7 +603,6 @@
 	RootSearcher["prototype"]["clearForm"] = clearForm;
 	RootSearcher["prototype"]["checkForm"] = checkForm;
 	RootSearcher["prototype"]["searchRoot"] = searchRoot;
-	RootSearcher["prototype"]["nobukiPop"] = nobukiPop;
 
 	/**
 	 * 目的地を追加
@@ -674,104 +738,62 @@
 	 	}
 
 	 	var $placeOrigin = $(dests[0]);
-		 	var placeOrigin = $.data($placeOrigin[0], "place");
-		 	var $dest = $(dests[dests.length - 1]);
-		 	var placeDest = $.data($dest[0], "place");
-		 	var request = {
-		 		origin: placeOrigin.geometry.location,
-		 		destination: placeDest.geometry.location,
-		 		waypoints: waypoints,
-		 		optimizeWaypoints: true,
-		 		travelMode: google.maps.TravelMode.DRIVING
-		 	};
-		 	request.origin.place = {
-		 		place_id: placeOrigin.place_id,
-		 		name: placeOrigin.name,
-		 		geometry: {
-		 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
-		 		}
-		 	};
-		 	request.origin.value = $.data($placeOrigin[0], "value");
-		 	request.destination.place = {
-		 		place_id: placeDest.place_id,
-		 		name: placeDest.name,
-		 		geometry: {
-		 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
-		 		}
-		 	};
-		 	request.destination.value = $.data($dest[0], "value");
+	 	var placeOrigin = $.data($placeOrigin[0], "place");
+	 	var $dest = $(dests[dests.length - 1]);
+	 	var placeDest = $.data($dest[0], "place");
+	 	var request = {
+	 		origin: placeOrigin.geometry.location,
+	 		destination: placeDest.geometry.location,
+	 		waypoints: waypoints,
+	 		optimizeWaypoints: true,
+	 		travelMode: google.maps.TravelMode.DRIVING
+	 	};
+	 	request.origin.place = {
+	 		place_id: placeOrigin.place_id,
+	 		name: placeOrigin.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
+	 		}
+	 	};
+	 	request.origin.value = $.data($placeOrigin[0], "value");
+	 	request.destination.place = {
+	 		place_id: placeDest.place_id,
+	 		name: placeDest.name,
+	 		geometry: {
+	 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
+	 		}
+	 	};
+	 	request.destination.value = $.data($dest[0], "value");
 
-		 	var departure = new Date((parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60) * 1000);
+	 	var departure = new Date((parseInt(rs.searchData.date.obj.getTime() / 1000) + rs.searchData.time.time * 60) * 1000);
 
-		 	rs.directionsService.route(request, function(result, status) {
-		 		if (status == google.maps.DirectionsStatus.OK) {
-		 			var arrival = departure.getTime();
-		 			for (var i = 0; i < result.routes.length; i++) {
-		 				for (var j = 0; j < result.routes[i].legs.length; j++) {
-		 					arrival += result.routes[i].legs[j].duration.value * 1000;
-		 				}
-		 			}
-		 			result.arrival = arrival;
-					rs.nobukiPop(result);
-					callback.call(null, result, departure);
-	            }
-	        });
-		}
+	 	rs.directionsService.route(request, function(result, status) {
+	 		if (status == google.maps.DirectionsStatus.OK) {
+	 			var arrival = departure.getTime();
+	 			for (var i = 0; i < result.routes.length; i++) {
+	 				for (var j = 0; j < result.routes[i].legs.length; j++) {
+	 					arrival += result.routes[i].legs[j].duration.value * 1000;
+	 				}
+	 			}
+	 			result.arrival = arrival;
+	 			callback.call(null, result, departure);
+	 		}
+	 	});
+	 }
 
-			function nobukiPop(res)
-			{
-				var rs = this;
-				var leg_len = res.routes[0].legs.length;
-				rs.placesService = new google.maps.places.PlacesService(rs.map);
-				
-				var request = new Array(leg_len);
 
-				if (typeof rs.popups != "undefined" && rs.popups.length > 0) {
-					for (var t = 0; t < rs.popups.length; t++) {
-				 		rs.popups[t].setMap(null);
-				 	}
-				}
-				rs.popups = [];		
-		console.log(res);
 
-				for(var i = 0;i<leg_len;i++){
-					request[i]={
-						location: res.routes[0].legs[i].end_location,
-				 		radius: '50',
-				 		types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
-				 	};
-				}//i
-console.log(request);
 
-				for(i=0;i<leg_len;i++){
-	//				reques(request[i],rs);  
-					rs.placesService.nearbySearch(request[i], function (results, status) {
-	console.log(status);
-				 	if (status == google.maps.places.PlacesServiceStatus.OK) {
-				 			for (var s = 0; s < results.length && s < 3; s++) {
-				 				rs.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
-				 				rs.popups[rs.popups.length - 1].loadContent = loadPlacesContent.bind(rs.popups[rs.popups.length - 1], results[s]);
-				 			}
-				 		}
-					});
-
-					}
-			}
-			function reques(request,rs)
-			{
-
-			}
 			/**
 		 * 与えられたPlaceのポップアップ用の情報を取得
 		 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
 		 */
-		 function loadPlacesContent(place) {
+		 function loadPlacesContent(place,result,results_len) {
 		 	var popup = this;
-
+		 	console.log(results_len);
 		 	var request = {
 		 		placeId: place.place_id
 		 	};
-
 		 	var placesService = new google.maps.places.PlacesService(popup.map);
 
 		 	var content = '';
@@ -780,23 +802,22 @@ console.log(request);
 		 	//		content += '<div class="_scroll">'
 		 			content += '<h3>' + details.name + '</h3>';
 		 			console.log(details);
-		 			console.log(place);
-		 			/*瑛彦が書いた*/
-		 			/* flickrのやつ　だいぶかっちりしてるはず*/	 			
-	                /*
+
 		 			var response;
 		 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
-		 				console.log(response);
 		 			})
 		 			.done(function(response){
+		 				content += '<div class="popup__photocontainer">';
 		 				for(var i = 0; i < response.photos.total && i < 10;i++){
-		 					var url = "http://farm"+response.photos.farm+".static.flickr.com/"+response.photos.server+"/"+response.photos.id+"_"+response.photos.secret+"_m.jpg";
+		 					var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
 		 					content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
-		 			});   
-		 			*/           
+		 				}
+		 				content += '</div>';
+		 			});
+		 			          
 	                /*瑛彦が書いた*/
 
-	                if (details.photos) {
+	                /*if (details.photos) {
 	                	content += '<div class="popup__photocontainer">';
 	                	for (var i = 0; i < details.photos.length && i < 6; i++) {
 	                		var opt = {
@@ -806,7 +827,7 @@ console.log(request);
 	                		content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
 	                	}
 	                	content += '</div>';
-	                }
+	                }*/
 
 	                if (details.reviews) {
 	                	var reviewTexts = "";
@@ -836,10 +857,9 @@ console.log(request);
 
 						popup.content = content;
 						popup.$popover.one("tap", "#tweetbut", function(){
-							// var t =document.getElementById('nobuki').value;
-							// var sendData ={ali: alibi,tim: time,text: t};
-							// $.post("/add_tweet",sendData);
-							console.log('EV')
+							var t =document.getElementById('nobuki').value;
+							var sendData ={ali: alibi,tim: time,text: t,location: place.geometry.location};
+							$.post("/add_tweet",sendData);
 						});
 	      
 		 			});						// ._scroll
