@@ -485,7 +485,7 @@
 		for(var i = 0;i<leg_len;i++){
 			request[i]={
 				location: res.routes[0].legs[i].end_location,
-				radius: '50',
+				radius: '1000',
 				types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
 
 			};
@@ -874,7 +874,7 @@
 		 		content += '<div class="popup__photocontainer">';
 		 		for(var i = 0; i < response.photos.total && i < 3;i++){
 		 			var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
-
+                    content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\''+url+'\');" class="popup__photo"></div></div></div></div>';
 		 		}
 		 		content += '</div>';
 		 	});
