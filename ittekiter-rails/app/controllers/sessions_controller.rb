@@ -27,7 +27,7 @@ class SessionsController < ApplicationController
     noun = ""
     verb = ""
     if nresult["ResultSet"]["uniq_result"]["word_list"] != nil then
-      if nresult["ResultSet"]["uniq_result"]["filtered_count"] == "1" then
+      if nresult["ResultSet"]["uniq_result"]["word_list"]["word"][0].nil? then
         noun = nresult["ResultSet"]["uniq_result"]["word_list"]["word"]["baseform"]
       else
         max = nresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i   
@@ -39,7 +39,7 @@ class SessionsController < ApplicationController
       end
     end
     if vresult["ResultSet"]["uniq_result"]["word_list"] != nil then
-      if vresult["ResultSet"]["uniq_result"]["filtered_count"] == "1" then
+      if vresult["ResultSet"]["uniq_result"]["word_list"]["word"][0].nil? then
         verb = vresult["ResultSet"]["uniq_result"]["word_list"]["word"]["baseform"]
       else
         max = vresult["ResultSet"]["uniq_result"]["word_list"]["word"][0]["count"].to_i
