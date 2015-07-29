@@ -485,7 +485,7 @@
 		for(var i = 0;i<leg_len;i++){
 			request[i]={
 				location: res.routes[0].legs[i].end_location,
-				radius: '50',
+				radius: '1000',
 				types: ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bowling_alley', 'cafe', 'campground', 'casino', 'cemetery', 'church', 'food', 'gym', 'health', 'hindu_temple', 'library', 'mosque', 'movie_theater', 'museum', 'park', 'restaurant', 'spa', 'stadium', 'synagogue', 'zoo']
 
 			};
@@ -502,7 +502,7 @@
 						console.log(status);
 						if (status == google.maps.places.PlacesServiceStatus.OK) {
 								results_len.push(results.length);
-							for (var s = 0; s < results.length && s < 3; s++) {
+							for (var s = 0; s < results.length && s < 4; s++) {
 								item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
 								console.log(results[s].geometry.location);
 								if(results[s].duration =="undefined"){results[s].duration=0;}
@@ -861,7 +861,7 @@
 		 	var content = '';
 		 	placesService.getDetails(request, function(details, status) {
 		 		if (status == google.maps.places.PlacesServiceStatus.OK) {
-		 	//		content += '<div class="_scroll">'
+		 			content += '<div class="_scroll">'
 		 	content += '<h3>' + details.name + '</h3>';
 		 	console.log(details);
 
@@ -872,7 +872,7 @@
 		 		content += '<div class="popup__photocontainer">';
 		 		for(var i = 0; i < response.photos.total && i < 3;i++){
 		 			var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
-
+                    content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\''+url+'\');" class="popup__photo"></div></div></div></div>';
 		 		}
 		 		content += '</div>';
 		 	});
@@ -900,7 +900,7 @@
 
 		 		alibi = $.data(alibi[0], "id");
 		 		content += '<div class="form-group"><time>'+time+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
-		 		content += '</div>';
+		 		content += '</div></div>';
 		 		var doc= $(".tweetbut");
 		 		var tj = new Date((place.duration+32400000));
 
