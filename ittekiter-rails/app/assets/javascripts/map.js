@@ -529,6 +529,8 @@
 					console.log(location);
 
 					item.popups.push(new ExpandablePopup(rs.map, location, json[i].name));
+					json[i].twidt = new Date(Date.parse(json[i].twidt));
+					json[i].twidt.setTime(json[i].twidt.getTime() - 32400000);
 					item.popups[item.popups.length - 1].loadContent = akihikoPlacesContent.bind(item.popups[item.popups.length - 1], json[i]);
 				}
 
@@ -899,7 +901,7 @@
 		 		var alibi = $(".alibi-collapse.in");
 
 		 		alibi = $.data(alibi[0], "id");
-		 		content += '<div class="form-group"><time>'+time+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
+		 		content += '<div class="form-group">予定時刻: <time>'+time.getFullYear()+'年'+(time.getMonth() + 1)+'月'+time.getDate()+'日 '+("0"+time.getHours()).slice(-2)+':'+("0"+time.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet予約</button>';
 		 		content += '</div>';
 		 		var doc= $(".tweetbut");
 		 		var tj = new Date((place.duration+32400000));
@@ -933,10 +935,10 @@
 
 		 function akihikoPlacesContent(twi) {
 		 	var popup = this;
-		
+
 		 	var content = '<h3>'+twi.name+'</h3>';
-		 		content += '<div class="form-group"><time>'+twi.twidt+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+twi.twict+'</textarea></div>';
-		 		content += '<div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button id="update_twi" type="button" class="btn btn-primary btn-block">変更</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button id="delete_twi" type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div>'
+		 		content += '<div class="form-group">予定時刻: <time>'+twi.twidt.getFullYear()+'年'+(twi.twidt.getMonth() + 1)+'月'+twi.twidt.getDate()+'日 '+("0"+twi.twidt.getHours()).slice(-2)+':'+("0"+twi.twidt.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+twi.twict+'</textarea></div>';
+		 		content += '<div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button id="update_twi" type="button" class="btn btn-primary btn-block btn-lg">変更</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button id="delete_twi" type="button" class="btn btn-danger btn-block btn-lg">削除</button></div></div>'
 		 		content += '</div>';
 		 		var doc= $(".tweetbut");
 
