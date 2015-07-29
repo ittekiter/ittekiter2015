@@ -16,6 +16,9 @@ Rails.application.routes.draw do
   get "/delete_alibi" => "alibis#delete_alibi"
   post "/update_alibi" => "alibis#update_alibi"
   post "/add_tweet" => "twiconts#add_tweet"
+  get "/get_tweet" => "twiconts#get_tweet"
+  get "/delete_tweet" => "twiconts#delete_tweet"
+  post "/update_tweet" => "twiconts#update_tweet"
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 

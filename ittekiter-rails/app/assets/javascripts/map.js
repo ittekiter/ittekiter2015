@@ -280,6 +280,7 @@
 
 		var item = this;
 
+		this.$item = $item;
 		this.root = root;
 		this.departure = departure;
 
@@ -488,28 +489,51 @@
 
 			};
 		}
-		console.log(res);
-		var results_len=[];
-		for(i=0;i<leg_len;i++){ 
-			rs.placesService.nearbySearch(request[i], function (results, status) {
-				console.log(status);
-				if (status == google.maps.places.PlacesServiceStatus.OK) {
-						results_len.push(results.length);
-					for (var s = 0; s < results.length && s < 3; s++) {
-						item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
 
-						if(results[s].duration =="undefined"){results[s].duration=0;}
-						twitimeset(results_len,item.popups,results[s],res.routes[0].legs,item.departure);
-					//	console.log(item.popups);console.log(results[s]);
-						item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s]);
-					}
+		$.get("/get_tweet", {id: $.data(this.$item[0], "id")}, function(json) {
+
+
+			console.log(json);
+			if (json.length == 0) {
+				var results_len=[];
+				for(i=0;i<leg_len;i++){ 
+					rs.placesService.nearbySearch(request[i], function (results, status) {
+						console.log(status);
+						if (status == google.maps.places.PlacesServiceStatus.OK) {
+								results_len.push(results.length);
+							for (var s = 0; s < results.length && s < 3; s++) {
+								item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
+								console.log(results[s].geometry.location);
+								if(results[s].duration =="undefined"){results[s].duration=0;}
+								twitimeset(results_len,item.popups,results[s],res.routes[0].legs,item.departure);
+							//	console.log(item.popups);console.log(results[s]);
+								item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s]);
+							}
+						}
+						else
+						{
+							results_len.push(0);
+						}
+					});
 				}
-				else
-				{
-					results_len.push(0);
+			}
+			else
+			{
+				for(var i=0;i<json.length;i++){
+					var location={A: 0.00000000,F:0.00000000};
+
+					location = new google.maps.LatLng(json[i].twilat, json[i].twilng);
+
+					console.log(json[i]);
+					console.log(location);
+
+					item.popups.push(new ExpandablePopup(rs.map, location, json[i].name));
+					item.popups[item.popups.length - 1].loadContent = akihikoPlacesContent.bind(item.popups[item.popups.length - 1], json[i]);
 				}
-			});
-		}
+
+
+			}
+		}, "json");
 	}
 	function twitimeset(results_len,popups,point,res,dep){
 		var nearby_num=[];
@@ -836,80 +860,110 @@
 		 	placesService.getDetails(request, function(details, status) {
 		 		if (status == google.maps.places.PlacesServiceStatus.OK) {
 		 	//		content += '<div class="_scroll">'
-		 			content += '<h3>' + details.name + '</h3>';
-		 			console.log(details);
+		 	content += '<h3>' + details.name + '</h3>';
+		 	console.log(details);
 
-		 			var response;
-		 			$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
-		 			})
-		 			.done(function(response){
-		 				content += '<div class="popup__photocontainer">';
-		 				for(var i = 0; i < response.photos.total && i < 10;i++){
-		 					var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
-		 					content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + url + '\');" class="popup__photo"></div></div></div></div>';
+		 	var response;
+		 	$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
+		 	})
+		 	.done(function(response){
+		 		content += '<div class="popup__photocontainer">';
+		 		for(var i = 0; i < response.photos.total && i < 3;i++){
+		 			var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
+
+		 		}
+		 		content += '</div>';
+		 	});
+
+		 	if (details.reviews) {
+		 		var reviewTexts = "";
+		 		for (var i = 0; i < details.reviews.length; i++) {
+		 			reviewTexts += details.reviews[i].text;
+		 		}
+
+		 		for (var i = 0; i < details.reviews.length && i < 3; i++) {
+		 			content += '<p>' + details.reviews[i].text + '</p>';
+		 		}
+		 	}
+		 	var sendText = {
+		 		content: reviewTexts
+		 	}
+		 	$.post("/make_suggestion",sendText,function(data){
+		 		console.log(data);
+		 	})	
+		 	.done(function(data){
+		 		var time = new Date(place.duration);
+		 		console.log(time);
+		 		var alibi = $(".alibi-collapse.in");
+
+		 		alibi = $.data(alibi[0], "id");
+		 		content += '<div class="form-group"><time>'+time+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
+		 		content += '</div>';
+		 		var doc= $(".tweetbut");
+		 		var tj = new Date((place.duration+32400000));
+
+		 		popup.content = content;
+		 		popup.$popover.one("tap", "#tweetbut", function(){
+		 			var t =document.getElementById('nobuki').value;
+		 			var sendData ={ali: alibi,tim: tj,text: t,lng: place.geometry.location.F,lat: place.geometry.location.A,name: place.name};
+
+		 			$.post("/add_tweet",sendData, function(id) {
+		 				$("#map").trigger("tap");
+		 				var data = {
+		 					twidt: new Date(place.duration),
+		 					twict: t,
+		 					name: place.name,
+		 					id: id
 		 				}
-		 				content += '</div>';
+		 				popup.loadContent = akihikoPlacesContent.bind(popup, data)
 		 			});
-		 			          
-	                /*瑛彦が書いた*/
+		 		});
 
-	                /*if (details.photos) {
-	                	content += '<div class="popup__photocontainer">';
-	                	for (var i = 0; i < details.photos.length && i < 6; i++) {
-	                		var opt = {
-	                			maxHeight: details.photos[i].height,
-	                			maxWidth: details.photos[i].width
-	                		}
-	                		content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\'' + details.photos[i].getUrl(opt) + '\');" class="popup__photo"></div></div></div></div>';
-	                	}
-	                	content += '</div>';
-	                }*/
-
-	                if (details.reviews) {
-	                	var reviewTexts = "";
-	                	for (var i = 0; i < details.reviews.length; i++) {
-	                		reviewTexts += details.reviews[i].text;
-	                	}
-
-	                	for (var i = 0; i < details.reviews.length && i < 3; i++) {
-	                		content += '<p>' + details.reviews[i].text + '</p>';
-	                	}
-	                }
-	                var sendText = {
-	                	content: reviewTexts
-	                }
-	                $.post("/make_suggestion",sendText,function(data){
-	                	console.log(data);
-	                })	
-	               .done(function(data){
-	               		var time = new Date(place.duration);
-	               		console.log(time);
-						var alibi = $(".alibi-collapse.in");
-
-						alibi = $.data(alibi[0], "id");
-		               	content += '<div class="form-group"><form id="tweet_time" class="form-control" type="text" placeholder='+time+' disabled></form><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet</button>';
-						content += '</div>';
-						var doc= $(".tweetbut");
-
-
-						popup.content = content;
-						popup.$popover.one("tap", "#tweetbut", function(){
-							var t =document.getElementById('nobuki').value;
-							var sendData ={ali: alibi,tim: time,text: t,location: JSON.stringify(place.geometry.location)};
-
-							$.post("/add_tweet",sendData);
-						});
-	      
 		 			});						// ._scroll
 
 
 
 		 		//	content += '<div><div class="form-group"><textarea id="nobuki" class="form-control" rows="6" maxlength="140">ここに入力して</textarea></div><br><button type="button" class="btn btn-info btn-lg btn-block" onClick="twitpop()">Tweet</button>';
-	
-				}
-			});
-			}
 
+		 	}
+		 });
+	}
+
+		 function akihikoPlacesContent(twi) {
+		 	var popup = this;
+		
+		 	var content = '<h3>'+twi.name+'</h3>';
+		 		content += '<div class="form-group"><time>'+twi.twidt+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+twi.twict+'</textarea></div>';
+		 		content += '<div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button id="update_twi" type="button" class="btn btn-primary btn-block">変更</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button id="delete_twi" type="button" class="btn btn-danger btn-block delete_alibi">削除</button></div></div>'
+		 		content += '</div>';
+		 		var doc= $(".tweetbut");
+
+		 		popup.content = content;
+		 		popup.$popover.one("tap", "#delete_twi", function(){
+		 			$.get("/delete_tweet",{id: twi.id}, function() {
+		 				$("#map").trigger("tap");
+		 				popup.$popover.one("contracted", function() {
+		 					popup.setMap(null);
+		 				});
+		 			});
+		 		});
+		 		popup.$popover.on("tap", "#update_twi", function(){
+		 			var data = {
+		 				id: twi.id,
+		 				tim: twi.twidt,
+		 				text: popup.$popover.find("#nobuki").val()
+		 			}
+		 			twi.twict = data.text;
+		 			console.log($("#nobuki"))
+		 			$.post("/update_tweet", data, function() {
+		 			});
+		 		});
+		 		
+	
+	}
+
+
+	
 
 	
 
@@ -1079,6 +1133,7 @@
 						opacity: 1
 					}, 'fast');
 				});
+
 				$("#map").one("tap", contractExpandablePopup.bind(popup, tmpWidth, tmpHeight, tmpCenter, tmpContent, resize));
 				$popover.dequeue();
 			});
@@ -1100,6 +1155,8 @@
 	 	popup.height = height;
 	 	popup.content = content;
 
+	 	var ev = new $.Event("contracted", this.$popover);
+
 	 	$popoverContent.transition({
 	 		opacity: 0
 	 	}, 'fast', function() {
@@ -1118,6 +1175,7 @@
 	 			draggable: true,
 	 			scrollwheel: true
 	 		});
+	 		$popover.trigger(ev);
 	 	});
 
 	 	google.maps.event.removeListener(resize);

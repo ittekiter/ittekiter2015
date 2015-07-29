@@ -29,7 +29,9 @@ ActiveRecord::Schema.define(version: 20150728062531) do
   create_table "twiconts", force: :cascade do |t|
     t.datetime "twidt"
     t.string   "twict"
-    t.string   "twiloc"
+    t.float    "twilng"
+    t.float    "twilat"
+    t.string   "name"
     t.integer  "alibi_id"
     t.string   "user_id"
     t.datetime "created_at", null: false
