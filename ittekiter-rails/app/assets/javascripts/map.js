@@ -530,7 +530,6 @@
 
 					item.popups.push(new ExpandablePopup(rs.map, location, json[i].name));
 					json[i].twidt = new Date(Date.parse(json[i].twidt));
-					json[i].twidt.setTime(json[i].twidt.getTime() - 32400000);
 					item.popups[item.popups.length - 1].loadContent = akihikoPlacesContent.bind(item.popups[item.popups.length - 1], json[i]);
 				}
 
@@ -904,7 +903,7 @@
 		 		content += '<div class="form-group">予定時刻: <time>'+time.getFullYear()+'年'+(time.getMonth() + 1)+'月'+time.getDate()+'日 '+("0"+time.getHours()).slice(-2)+':'+("0"+time.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet予約</button>';
 		 		content += '</div>';
 		 		var doc= $(".tweetbut");
-		 		var tj = new Date((place.duration+32400000));
+		 		var tj = new Date((place.duration));
 
 		 		popup.content = content;
 		 		popup.$popover.one("tap", "#tweetbut", function(){
