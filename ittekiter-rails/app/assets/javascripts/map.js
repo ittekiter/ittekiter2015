@@ -225,7 +225,7 @@
 		var $pd = $item.find(".place-origin");
 		$pd.val(root.request.origin.value);
 
-		root.request.origin.place.geometry.location = new google.maps.LatLng(root.request.origin.place.geometry.location.A, root.request.origin.place.geometry.location.F);
+		root.request.origin.place.geometry.location = new google.maps.LatLng(root.request.origin.place.geometry.location.latitude, root.request.origin.place.geometry.location.longitude);
 
 		$.data($pd[0], "value", root.request.origin.value);
 		$.data($pd[0], "place", root.request.origin.place);
@@ -236,7 +236,7 @@
 			var $pd = $fg.find(".place-destination");
 			$pd.val(waypoint.location.value);
 
-			waypoint.location.place.geometry.location = new google.maps.LatLng(waypoint.location.place.geometry.location.A, waypoint.location.place.geometry.location.F);
+			waypoint.location.place.geometry.location = new google.maps.LatLng(waypoint.location.place.geometry.location.latitude, waypoint.location.place.geometry.location.longitude);
 
 			$.data($pd[0], "value", waypoint.location.value);
 			$.data($pd[0], "place", waypoint.location.place);
@@ -249,7 +249,7 @@
 		var $pd = $fg.find(".place-destination");
 		$pd.val(root.request.destination.value);
 
-		root.request.destination.place.geometry.location = new google.maps.LatLng(root.request.destination.place.geometry.location.A, root.request.destination.place.geometry.location.F);
+		root.request.destination.place.geometry.location = new google.maps.LatLng(root.request.destination.place.geometry.location.latitude, root.request.destination.place.geometry.location.longitude);
 
 		$.data($pd[0], "value", root.request.destination.value);
 		$.data($pd[0], "place", root.request.destination.place);
@@ -324,6 +324,17 @@
 			function modifyRoot() {
 				$("#base").removeClass('base--sidebaropened');
 				searcher.searchRoot(function(result, departure) {
+					var data = {
+						id: $.data($item[0], 'id'),
+						route_object: JSON.stringify(result),
+						departure: departure
+					}
+
+					$.post("/update_alibi", data, function(){
+						item.clearPop();
+						item.makePop();
+					});
+
 					var $destination = $item.find(".place-destination:last");
 					var title = $.data($destination[0], "place").name;
 					if (result.request.waypoints.length > 0)
@@ -360,17 +371,6 @@
 					}
 
 				 	$allitem.eq(i).closest(".panel").after($item.closest(".panel"));
-
-					var data = {
-						id: $.data($item[0], 'id'),
-						route_object: JSON.stringify(result),
-						departure: departure
-					}
-
-					$.post("/update_alibi", data, function(){
-						item.clearPop();
-						item.makePop();
-					});
 				});
 			}
 
@@ -426,7 +426,9 @@
 						if (passTime > currentTime) {
 							var index = parseInt(step.path.length * (passed / duration));
 							if (index < 0) index = 0;
-							this.imakoko.setPosition(new google.maps.LatLng(step.path[index].A, step.path[index].F));
+							// if (typeof step.path[index].latitude !== "undefined")
+							// 	step.path[index] = new google.maps.LatLng(step.path[index].latitude, step.path[index].longitude);
+							this.imakoko.setPosition(step.path[index]);
 							this.imakoko.setVisible(true);
 							passTime = this.departure;
 							return;
@@ -445,15 +447,18 @@
 	 */
 	function renewMapDisplay() {
 		for (var i = 0; i < this.root.routes.length; i++) {
-			this.root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(this.root.routes[i].bounds.ya.A, this.root.routes[i].bounds.ra.j), new google.maps.LatLng(this.root.routes[i].bounds.ya.j, this.root.routes[i].bounds.ra.A));
-			for (var j = 0; j < this.root.routes[i].legs.length; j++) {
-				var leg = this.root.routes[i].legs[j];
-				this.root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.A, leg.start_location.F);
-				this.root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.A, leg.end_location.F);
-				for (var k = 0; k < this.root.routes[i].legs[j].steps.length; k++) {
-					for (var l = 0; l < this.root.routes[i].legs[j].steps[k].path.length; l++) {
-						var path = this.root.routes[i].legs[j].steps[k].path[l];
-						this.root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.A, path.F);
+			// google mapsのオブジェクトにパース(パース済みのものはパースしない)
+			if (typeof this.root.routes[i].bounds.sw !== "undefined") {
+				this.root.routes[i].bounds = new google.maps.LatLngBounds(new google.maps.LatLng(this.root.routes[i].bounds.sw.latitude, this.root.routes[i].bounds.sw.longitude), new google.maps.LatLng(this.root.routes[i].bounds.ne.latitude, this.root.routes[i].bounds.ne.longitude));
+				for (var j = 0; j < this.root.routes[i].legs.length; j++) {
+					var leg = this.root.routes[i].legs[j];
+					this.root.routes[i].legs[j].start_location = new google.maps.LatLng(leg.start_location.latitude, leg.start_location.longitude);
+					this.root.routes[i].legs[j].end_location = new google.maps.LatLng(leg.end_location.latitude, leg.end_location.longitude);
+					for (var k = 0; k < this.root.routes[i].legs[j].steps.length; k++) {
+						for (var l = 0; l < this.root.routes[i].legs[j].steps[k].path.length; l++) {
+							var path = this.root.routes[i].legs[j].steps[k].path[l];
+							this.root.routes[i].legs[j].steps[k].path[l] = new google.maps.LatLng(path.latitude, path.longitude);
+						}
 					}
 				}
 			}
@@ -462,9 +467,9 @@
 		this.imakoko.setVisible(true);
 		this.searcher.directionsDisplay.setDirections(this.root);
 	}
+
 	function clearPop()
 	{
-
 		for (var t = 0; t < this.popups.length; t++) {
 			this.popups[t].setMap(null);
 		}
@@ -472,7 +477,7 @@
 
 	function makePop()
 	{
-		var res =this.root;
+		var res = this.root;
 		var rs = this.searcher;
 		var leg_len = res.routes[0].legs.length;
 		rs.placesService = new google.maps.places.PlacesService(rs.map);
@@ -492,22 +497,18 @@
 		}
 
 		$.get("/get_tweet", {id: $.data(this.$item[0], "id")}, function(json) {
-
-
-			console.log(json);
 			if (json.length == 0) {
 				var results_len=[];
 				for(i=0;i<leg_len;i++){ 
 					rs.placesService.nearbySearch(request[i], function (results, status) {
-						console.log(status);
 						if (status == google.maps.places.PlacesServiceStatus.OK) {
 								results_len.push(results.length);
 							for (var s = 0; s < results.length && s < 3; s++) {
 								item.popups.push(new ExpandablePopup(rs.map, results[s].geometry.location, results[s].name));
-								console.log(results[s].geometry.location);
+
 								if(results[s].duration =="undefined"){results[s].duration=0;}
 								twitimeset(results_len,item.popups,results[s],res.routes[0].legs,item.departure);
-							//	console.log(item.popups);console.log(results[s]);
+
 								item.popups[item.popups.length - 1].loadContent = loadPlacesContent.bind(item.popups[item.popups.length - 1], results[s]);
 							}
 						}
@@ -525,18 +526,14 @@
 
 					location = new google.maps.LatLng(json[i].twilat, json[i].twilng);
 
-					console.log(json[i]);
-					console.log(location);
-
 					item.popups.push(new ExpandablePopup(rs.map, location, json[i].name));
 					json[i].twidt = new Date(Date.parse(json[i].twidt));
 					item.popups[item.popups.length - 1].loadContent = akihikoPlacesContent.bind(item.popups[item.popups.length - 1], json[i]);
 				}
-
-
 			}
 		}, "json");
 	}
+
 	function twitimeset(results_len,popups,point,res,dep){
 		var nearby_num=[];
 		var route_time=[];//そのルートにかかる時間
@@ -705,11 +702,10 @@
 
 		// 場所名をキャッシュ
 		$.data($element[0], "value", $element.val());
-		// this.searchData[type] = autocomplete.getPlace();
 
-		// フォームの値を同期
-		// $('.where_' + type).blur().val(this.searchData[type].name);
 		if (typeof place.geometry !== "undefined") {
+			place.geometry.location.latitude = place.geometry.location.lat();
+			place.geometry.location.longitude = place.geometry.location.lng();
 			$.data($element[0], "place", place);
 			$.data($element[0], "searchEnable", true);
 		}
@@ -791,7 +787,10 @@
 	 			place_id: place.place_id,
 	 			name: place.name,
 	 			geometry: {
-	 				location: new google.maps.LatLng(place.geometry.location.A, place.geometry.location.F)
+	 				location: {
+	 					latitude: place.geometry.location.latitude,
+	 					longitude: place.geometry.location.longitude
+	 				}
 	 			}
 	 		};
 	 		location.place_id = place.place_id;
@@ -817,7 +816,10 @@
 	 		place_id: placeOrigin.place_id,
 	 		name: placeOrigin.name,
 	 		geometry: {
-	 			location: new google.maps.LatLng(placeOrigin.geometry.location.A, placeOrigin.geometry.location.F)
+	 			location:  {
+ 					latitude: placeOrigin.geometry.location.latitude,
+ 					longitude: placeOrigin.geometry.location.longitude
+ 				}
 	 		}
 	 	};
 	 	request.origin.value = $.data($placeOrigin[0], "value");
@@ -825,8 +827,11 @@
 	 		place_id: placeDest.place_id,
 	 		name: placeDest.name,
 	 		geometry: {
-	 			location: new google.maps.LatLng(placeDest.geometry.location.A, placeDest.geometry.location.F)
-	 		}
+	 			location:  {
+ 					latitude: placeDest.geometry.location.latitude,
+ 					longitude: placeDest.geometry.location.longitude
+ 				}
+ 	 		}
 	 	};
 	 	request.destination.value = $.data($dest[0], "value");
 
@@ -836,141 +841,154 @@
 	 		if (status == google.maps.DirectionsStatus.OK) {
 	 			var arrival = departure.getTime();
 	 			for (var i = 0; i < result.routes.length; i++) {
+	 				// パース用データを保存
+	 				var sw = result.routes[i].bounds.getSouthWest();
+	 				var ne = result.routes[i].bounds.getNorthEast();
+	 				result.routes[i].bounds = {
+	 					sw: {
+	 						latitude: sw.lat(),
+	 						longitude: sw.lng()
+	 					},
+	 					ne: {
+	 						latitude: ne.lat(),
+	 						longitude: ne.lng()
+	 					}
+	 				}
 	 				for (var j = 0; j < result.routes[i].legs.length; j++) {
 	 					arrival += result.routes[i].legs[j].duration.value * 1000;
+
+	 					// パース用データを保存
+						var leg = result.routes[i].legs[j];
+						result.routes[i].legs[j].start_location = {
+							latitude: leg.start_location.lat(),
+							longitude: leg.start_location.lng()
+						};
+						result.routes[i].legs[j].end_location = {
+							latitude: leg.end_location.lat(), 
+							longitude: leg.end_location.lng()
+						};
+						for (var k = 0; k < result.routes[i].legs[j].steps.length; k++) {
+							for (var l = 0; l < result.routes[i].legs[j].steps[k].path.length; l++) {
+								var path = result.routes[i].legs[j].steps[k].path[l];
+								result.routes[i].legs[j].steps[k].path[l] = {
+									latitude: path.lat(),
+									longitude: path.lng()
+								};
+							}
+						}
 	 				}
 	 				arrival += 3600000 * (result.routes[i].legs.length - 1);
 	 			}
 	 			result.arrival = arrival;
+
 	 			callback.call(null, result, departure);
 	 		}
 	 	});
 	 }
 
-			/**
-		 * 与えられたPlaceのポップアップ用の情報を取得
-		 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
-		 */
-		 function loadPlacesContent(place,result) {
-		 	var popup = this;
-		 	var request = {
-		 		placeId: place.place_id
-		 	};
-		 	var placesService = new google.maps.places.PlacesService(popup.map);
-		 	console.log(result);
-		 	console.log(place);
-		 	var content = '';
-		 	placesService.getDetails(request, function(details, status) {
-		 		if (status == google.maps.places.PlacesServiceStatus.OK) {
-		 	//		content += '<div class="_scroll">'
-		 	content += '<h3>' + details.name + '</h3>';
-		 	console.log(details);
+	/**
+	 * 与えられたPlaceのポップアップ用の情報を取得
+	 * @param  {google.maps.places.PlaceResult} place ポップアップするPlace
+	 */
+	 function loadPlacesContent(place,result) {
+	 	var popup = this;
+	 	var request = {
+	 		placeId: place.place_id
+	 	};
+	 	var placesService = new google.maps.places.PlacesService(popup.map);
+	 	var content = '';
+	 	placesService.getDetails(request, function(details, status) {
+	 		if (status == google.maps.places.PlacesServiceStatus.OK) {
+			 	content += '<h3>' + details.name + '</h3>';
 
-		 	var response;
-		 	$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
-		 	})
-		 	.done(function(response){
-		 		content += '<div class="popup__photocontainer">';
-		 		for(var i = 0; i < response.photos.total && i < 3;i++){
-		 			var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
-                    content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\''+url+'\');" class="popup__photo"></div></div></div></div>';
-		 		}
-		 		content += '</div>';
-		 	});
+			 	var response;
+			 	$.getJSON("https://api.flickr.com/services/rest?method=flickr.photos.search&api_key=f51d23964bce3d29afd14807431a3dd4&text="+details.name+"&format=json&nojsoncallback=1&is_common=true",function(response){
+			 	})
+			 	.done(function(response){
+			 		content += '<div class="popup__photocontainer">';
+			 		for(var i = 0; i < response.photos.total && i < 3;i++){
+			 			var url = "http://farm"+response.photos.photo[i].farm+".static.flickr.com/"+response.photos.photo[i].server+"/"+response.photos.photo[i].id+"_"+response.photos.photo[i].secret+"_m.jpg";
+	                    content += '<div class="popup__photowrapper"><div class="popup__photospacer"><div class="photo__thumbnail"><div style="background-image: url(\''+url+'\');" class="popup__photo"></div></div></div></div>';
+			 		}
+			 		content += '</div>';
+			 	});
 
-		 	if (details.reviews) {
-		 		var reviewTexts = "";
-		 		for (var i = 0; i < details.reviews.length; i++) {
-		 			reviewTexts += details.reviews[i].text;
-		 		}
+			 	if (details.reviews) {
+			 		var reviewTexts = "";
+			 		for (var i = 0; i < details.reviews.length; i++) {
+			 			reviewTexts += details.reviews[i].text;
+			 		}
 
-		 		for (var i = 0; i < details.reviews.length && i < 3; i++) {
-		 			content += '<p>' + details.reviews[i].text + '</p>';
-		 		}
+			 		for (var i = 0; i < details.reviews.length && i < 3; i++) {
+			 			content += '<p>' + details.reviews[i].text + '</p>';
+			 		}
+			 	}
+			 	var sendText = {
+			 		content: reviewTexts
+			 	}
+			 	$.post("/make_suggestion",sendText,function(data){
+			 	})	
+			 	.done(function(data){
+			 		var time = new Date(place.duration);
+			 		var alibi = $(".alibi-collapse.in");
+
+			 		alibi = $.data(alibi[0], "id");
+			 		content += '<div class="form-group">予定時刻: <time>'+time.getFullYear()+'年'+(time.getMonth() + 1)+'月'+time.getDate()+'日 '+("0"+time.getHours()).slice(-2)+':'+("0"+time.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet予約</button>';
+			 		content += '</div>';
+			 		var doc= $(".tweetbut");
+			 		var tj = new Date((place.duration));
+
+			 		popup.content = content;
+			 		popup.$popover.one("tap", "#tweetbut", function(){
+			 			var t =document.getElementById('nobuki').value;
+			 			var sendData ={ali: alibi, tim: tj, text: t, lng: place.geometry.location.lng(), lat: place.geometry.location.lat(), name: place.name};
+
+			 			$.post("/add_tweet",sendData, function(id) {
+			 				$("#map").trigger("tap");
+			 				var data = {
+			 					twidt: new Date(place.duration),
+			 					twict: t,
+			 					name: place.name,
+			 					id: id
+			 				}
+			 				popup.loadContent = akihikoPlacesContent.bind(popup, data)
+			 			});
+			 		});
+				});	
 		 	}
-		 	var sendText = {
-		 		content: reviewTexts
-		 	}
-		 	$.post("/make_suggestion",sendText,function(data){
-		 		console.log(data);
-		 	})	
-		 	.done(function(data){
-		 		var time = new Date(place.duration);
-		 		console.log(time);
-		 		var alibi = $(".alibi-collapse.in");
-
-		 		alibi = $.data(alibi[0], "id");
-		 		content += '<div class="form-group">予定時刻: <time>'+time.getFullYear()+'年'+(time.getMonth() + 1)+'月'+time.getDate()+'日 '+("0"+time.getHours()).slice(-2)+':'+("0"+time.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+data+'</textarea></div><button type="button" id="tweetbut" class="btn btn-info btn-lg btn-block">Tweet予約</button>';
-		 		content += '</div>';
-		 		var doc= $(".tweetbut");
-		 		var tj = new Date((place.duration));
-
-		 		popup.content = content;
-		 		popup.$popover.one("tap", "#tweetbut", function(){
-		 			var t =document.getElementById('nobuki').value;
-		 			var sendData ={ali: alibi,tim: tj,text: t,lng: place.geometry.location.F,lat: place.geometry.location.A,name: place.name};
-
-		 			$.post("/add_tweet",sendData, function(id) {
-		 				$("#map").trigger("tap");
-		 				var data = {
-		 					twidt: new Date(place.duration),
-		 					twict: t,
-		 					name: place.name,
-		 					id: id
-		 				}
-		 				popup.loadContent = akihikoPlacesContent.bind(popup, data)
-		 			});
-		 		});
-
-		 			});						// ._scroll
-
-
-
-		 		//	content += '<div><div class="form-group"><textarea id="nobuki" class="form-control" rows="6" maxlength="140">ここに入力して</textarea></div><br><button type="button" class="btn btn-info btn-lg btn-block" onClick="twitpop()">Tweet</button>';
-
-		 	}
-		 });
+		});
 	}
 
-		 function akihikoPlacesContent(twi) {
-		 	var popup = this;
+	function akihikoPlacesContent(twi) {
+	 	var popup = this;
 
-		 	var content = '<h3>'+twi.name+'</h3>';
-		 		content += '<div class="form-group">予定時刻: <time>'+twi.twidt.getFullYear()+'年'+(twi.twidt.getMonth() + 1)+'月'+twi.twidt.getDate()+'日 '+("0"+twi.twidt.getHours()).slice(-2)+':'+("0"+twi.twidt.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+twi.twict+'</textarea></div>';
-		 		content += '<div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button id="update_twi" type="button" class="btn btn-primary btn-block btn-lg">変更</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button id="delete_twi" type="button" class="btn btn-danger btn-block btn-lg">削除</button></div></div>'
-		 		content += '</div>';
-		 		var doc= $(".tweetbut");
+	 	var content = '<h3>'+twi.name+'</h3>';
+	 		content += '<div class="form-group">予定時刻: <time>'+twi.twidt.getFullYear()+'年'+(twi.twidt.getMonth() + 1)+'月'+twi.twidt.getDate()+'日 '+("0"+twi.twidt.getHours()).slice(-2)+':'+("0"+twi.twidt.getMinutes()).slice(-2)+'</time><textarea id="nobuki" class="form-control" rows="3" maxlength="140">'+twi.twict+'</textarea></div>';
+	 		content += '<div class="row"><div class="col-xs-6" style="padding-right: 5px;"><button id="update_twi" type="button" class="btn btn-primary btn-block btn-lg">変更</button></div> <div class="col-xs-6" style="padding-left: 5px;"><button id="delete_twi" type="button" class="btn btn-danger btn-block btn-lg">削除</button></div></div>'
+	 		content += '</div>';
+	 	var doc= $(".tweetbut");
 
-		 		popup.content = content;
-		 		popup.$popover.one("tap", "#delete_twi", function(){
-		 			$.get("/delete_tweet",{id: twi.id}, function() {
-		 				$("#map").trigger("tap");
-		 				popup.$popover.one("contracted", function() {
-		 					popup.setMap(null);
-		 				});
-		 			});
-		 		});
-		 		popup.$popover.on("tap", "#update_twi", function(){
-		 			var data = {
-		 				id: twi.id,
-		 				tim: twi.twidt,
-		 				text: popup.$popover.find("#nobuki").val()
-		 			}
-		 			twi.twict = data.text;
-		 			console.log($("#nobuki"))
-		 			$.post("/update_tweet", data, function() {
-		 			});
-		 		});
-		 		
-	
+		popup.content = content;
+		popup.$popover.one("tap", "#delete_twi", function(){
+			$.get("/delete_tweet",{id: twi.id}, function() {
+				$("#map").trigger("tap");
+				popup.$popover.one("contracted", function() {
+					popup.setMap(null);
+				});
+			});
+		});
+		popup.$popover.on("tap", "#update_twi", function(){
+			var data = {
+				id: twi.id,
+				tim: twi.twidt,
+				text: popup.$popover.find("#nobuki").val()
+			}
+			twi.twict = data.text;
+
+			$.post("/update_tweet", data, function() {
+			});
+		});
 	}
-
-
-	
-
-	
-
-
 
 	/**
 	 * 地図上にクリックすると拡大するポップアップを表示(InfoWindow代替)
@@ -1231,7 +1249,7 @@
  		start.scrolling = start.scrolling || Math.abs(e.originalEvent.changedTouches[0].pageY - start.y) - Math.abs(e.originalEvent.changedTouches[0].pageX - start.x);
  		if (start.scrolling > 0 && !$(this).hasClass('disable_scroll')) {
  			var stopProp = this.scrollTop ? this.scrollHeight - this.offsetHeight - this.scrollTop ? true : e.originalEvent.changedTouches[0].pageY >= start.y : this.scrollHeight - this.offsetHeight ? e.originalEvent.changedTouches[0].pageY <= start.y : false;
- 			console.log(this.scrollHeight, this.offsetHeight, this.scrollTop, e.originalEvent.changedTouches[0].pageY, start.y)
+
  			if (stopProp) {
  				e.stopImmediatePropagation();
  			} else {
