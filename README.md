@@ -1,13 +1,11 @@
 # ittekiter2015
-## Git-Flowモデル
-1. **master** 	
- 動作可能版。テストが完了したdevelopブランチを移行する。masterブランチにはコミットしない。
- 保護ブランチで*プッシュ不可能、マージリクエストのみ可能*。
-2. **develop**	
- featureブランチをマージしてテストを行う。
-3. **feature**	
- 機能の開発やバグフィックスを行う。機能毎に随時作成・統合・破棄する。ブランチ名は*feature/○○*とする。
-4. **hotfix**	
- 緊急バグ対応用。masterブランチから分岐し、masterとdevelopにマージして、バグを修正する。
-5. **release**	
- 公開版管理用。公開していないので使用予定なし。
+<img src="https://raw.githubusercontent.com/ittekiter/ittekiter2015/image/front_page.png" alt="フロントページ" width="500">  
+アリバイツイート予約ツール。  
+出発地・目的地・日付を入力すると、その場所に行ったときのツイート候補を提示し、投稿予約できます。  
+投稿時刻はルート情報により自動で決まるため、あたかもその時その場所に行ったかのようなリアルなツイートが可能です。  
+
+<img src="https://raw.githubusercontent.com/ittekiter/ittekiter2015/image/alibi_list.png" alt="アリバイ一覧" width="500">  
+利用時はTwitterアカウントでログインし、アリバイの登録・管理や進行状況の確認が出来ます。
+
+<img src="https://raw.githubusercontent.com/ittekiter/ittekiter2015/image/register_tweet.png" alt="ツイート予約" width="500">   
+Tweet内容は、Google Places APIとヤフーの日本語形態素解析APIを使用して自動生成します。
